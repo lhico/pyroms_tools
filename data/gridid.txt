@@ -1,0 +1,11 @@
+id      = SBB4
+name    = SBB4
+grdfile = /home/lhico/data/roms_files/sbb_grid_roms.nc
+N       = 27
+grdtype = roms
+Vtrans  = 4
+theta_s = 7
+theta_b = 3
+Tcline  = 250
+#
+#
