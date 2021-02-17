@@ -17,12 +17,12 @@ The forcing files are not provided in this package, but are listed beow
 
 Roms tools interpolates into ROMS netcdf input files information from :
 
-a. [Global Ocean Physics Reanalysis](https://resources.marine.copernicus.eu/?option=com_csw&task=results?option=com_csw&view=details&product_id=GLOBAL_REANALYSIS_PHY_001_030) (initial condition/boundary files)
-b. [ERA5 single levels](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=form) (surface forcing)
-c. [ERA5 pressure levels](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-pressure-levels?tab=form) (surface forcing)
-d. [TPXO](https://www.tpxo.net/) (tides)
-e. [GEBCO](https://www.gebco.net/data_and_products/gridded_bathymetry_data/) (bathymetry)
-f. Global Ocean Physics Reanalysis netcdf (GLO-MFC-001_030_mask_bathy.nc)
+* a. [Global Ocean Physics Reanalysis](https://resources.marine.copernicus.eu/?option=com_csw&task=results?option=com_csw&view=details&product_id=GLOBAL_REANALYSIS_PHY_001_030) (initial condition/boundary files)
+* b. [ERA5 single levels](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=form) (surface forcing)
+* c. [ERA5 pressure levels](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-pressure-levels?tab=form) (surface forcing)
+* d. [TPXO](https://www.tpxo.net/) (tides)
+* e. [GEBCO](https://www.gebco.net/data_and_products/gridded_bathymetry_data/) (bathymetry)
+* f. Global Ocean Physics Reanalysis netcdf (GLO-MFC-001_030_mask_bathy.nc)
 
 The file director is organized as (the letters indicate where you should add downloaded files):
 ```
