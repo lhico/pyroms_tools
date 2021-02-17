@@ -1,0 +1,17 @@
+scripts/era_glorys/utils/__pycache__
+scripts/tpxo/utils/__pycache__
+scripts/era_glorys/*nc
+scripts/tpxo/CGrid_TPXO8/__pycache__
+scripts/tpxo/*nc
+data/atmos_model/*
+!data/atmos_model/.empty
+data/aux_data/*
+!data/aux_data/.empty
+data/ocean_model/*
+!data/ocean_model/.empty
+data/roms_files/*
+!data/roms_files/.empty
+data/tpxo_files/*
+!data/tpxo_files/.empty
+data/*nc
+scripts/*nc
