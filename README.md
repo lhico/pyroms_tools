@@ -22,7 +22,7 @@ Roms tools interpolates into ROMS netcdf input files information from :
 * c. [ERA5 pressure levels](https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-pressure-levels?tab=form) (surface forcing)
 * d. [TPXO](https://www.tpxo.net/) (tides)
 * e. [GEBCO](https://www.gebco.net/data_and_products/gridded_bathymetry_data/) (bathymetry)
-* f. Global Ocean Physics Reanalysis netcdf (GLO-MFC-001_030_mask_bathy.nc) 
+* f. Global Ocean Physics Reanalysis netcdf (GLO-MFC-001_030_mask_bathy.nc)
 
 The file director is organized as (the letters indicate where you should add downloaded files):
 ```
@@ -73,3 +73,17 @@ export UID=$(id -u)
 sudo docker run -it --user=$UID -v $PREFIX/data:/home/lhico/data -v $PREFIX/scripts:/home/lhico/scripts pyroms
 
 ```
+
+If you need to use the Graphic User Interface (GUI), you need to set up the paths from your machine to the docker container. In my case (Ubuntu 18.04), I did the following:
+
+```
+PREFIX=/your/pyroms_lhico/directory
+sudo docker run -it \
+   -v $PREFIX/data:/home/lhico/data \
+   -v $PREFIX/scripts2:/home/lhico/scripts \
+   -e DISPLAY=$DISPLAY \
+   -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
+    pyroms
+```
+
+We don't include the installation of X11 in the Dockerfile, because it depends on hardware. A more in-depth explanation may be found [here](https://stackoverflow.com/questions/25281992/alternatives-to-ssh-x11-forwarding-for-docker-containers)
