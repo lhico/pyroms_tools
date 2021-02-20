@@ -11,6 +11,7 @@ from scipy.interpolate import griddata
 from bathy_smoother import bathy_smoothing, bathy_tools
 from utils import utils as ut
 
+
 # data path
 ddir = '../../data/'
 odir = '../../data/roms_files'
@@ -18,8 +19,8 @@ topofile = '../../data/aux_data/gebco.nc'
 
 rotation_angle = 50  # anticlockwise
 # Horizontal grid dimension (these dims are also used in roms config .in file)
-Lm = 250
-Mm = 160
+Lm = 90
+Mm = 40
 
 # vertical coordinate (these coordinates are also used in roms config .in file)
 theta_b = 3.0  # change the sigma coordinates close to the bottom
@@ -28,12 +29,21 @@ Tcline = 250  # parameters
 N = 27  # number of depth levels
 
 
-# creating a rectangular grid
-lon0=360-50.0 ; lat0=-20.0  # bottom left corners
-lon1=360-50.0 ; lat1=-28.0  # bottom right corner
-lon2=360-35.6 ; lat2=-28.0  # top right corner
-lon3=360-35.6 ; lat3=-20.0  # top left corner
+# # creating a rectangular grid
+# lon0=360-50.0 ; lat0=-20.0  # bottom left corners
+# lon1=360-50.0 ; lat1=-28.0  # bottom right corner
+# lon2=360-35.6 ; lat2=-28.0  # top right corner
+# lon3=360-35.6 ; lat3=-20.0  # top left corner
 
+dlon = -2.5
+dlat = 0
+
+
+# creating a rectangular grid
+lon0=360-48.0 + dlon ; lat0=-22.0 + dlat  # bottom left corners
+lon1=360-48.0 + dlon ; lat1=-29.0 + dlat  # bottom right corner
+lon2=360-36.0 + dlon ; lat2=-29.0 + dlat  # top right corner
+lon3=360-36.0 + dlon ; lat3=-22.0 + dlat  # top left corner
 
 # define base projection (here mercator)
 lon_min = min(lon0, lon1, lon2, lon3)
@@ -135,4 +145,6 @@ grd_name = 'SBB4'
 grd = pyroms.grid.ROMS_Grid(grd_name, hgrd, vgrd)
 
 # write grid to netcdf file
-pyroms.grid.write_ROMS_grid(grd, filename=osp.join(odir, 'sbb_grid_roms.nc'))
+outfile = osp.join(odir, 'sbb_grid_roms.nc')
+pyroms.grid.write_ROMS_grid(grd, filename=outfile)
+print(f'file saved at {outfile}')
