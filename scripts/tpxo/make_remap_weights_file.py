@@ -3,7 +3,7 @@ import pyroms_toolbox
 import CGrid_TPXO8
 
 # load the grid
-pth_tpxo = '../../data/topo/'
+pth_tpxo = '../../data/tpxo_files/'
 srcgrd = CGrid_TPXO8.get_nc_CGrid_TPXO8(pth_tpxo+'grid_tpxo8atlas_30_v1.nc', \
       xrange=(1400, 2400), yrange=(9000, 10000))
 #srcgrd_lr = CGrid_TPXO8.get_nc_CGrid_TPXO8(pth_tpxo+'grid_tpxo8_atlas6.nc', name='TPXO8atlas6', \
