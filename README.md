@@ -48,12 +48,13 @@ TO-DO: document this step
 
 These are the main scripts we are using here.
 
- 1. roms grid: make_regular_grid.py
- 2. mask reference file: make_ref_mask.py
- 3. weight files for interpolation: make_remaps_weights_file.py
- 4. initial conditions: make_ic_files.py
- 5. boundary conditions: make_bdry_files.py
- 6. surface forcing: era2roms.py  <-- refactor era netcdfs to a  format roms can read
+1. roms grid: make_regular_grid.py
+2. mask reference file: make_ref_mask.py
+3. weight files for interpolation: make_remaps_weights_file.py
+4. initial conditions: make_ic_files.py
+4.1 notice that the netcdf input file with salinity,temperature, and currents (and maybe other variables) must be 3D (depth, lon, lat)
+5. boundary conditions: make_bdry_files.py
+6. surface forcing: era2roms.py  <-- refactor era netcdfs to a  format roms can read
 
 
 ## 2. Installation
