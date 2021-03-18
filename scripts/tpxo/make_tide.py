@@ -37,11 +37,12 @@ import pyroms_toolbox
 
 import CGrid_TPXO8
 
-pth_tpxo = '../../data/topo/'
+pth_tpxo = '../../data/tpxo_files'
+pth_roms = '../../data/roms_files'
 
 # tidal constituents
 consts1 =['Q1', 'O1', 'P1', 'K1', 'N2', 'M2', 'S2', 'K2']
-consts2 = ['MF']
+consts2 = []
 consts = consts1+consts2
 # consts =['M2']
 consts_num = len(consts)
@@ -63,10 +64,10 @@ wts_file_u_lr = 'remap_weights_TPXO8atlas6_to_SBB4_bilinear_u_to_rho.nc'
 wts_file_v_lr = 'remap_weights_TPXO8atlas6_to_SBB4_bilinear_v_to_rho.nc'
 
 # read TPXO8 files
-# srcgrd = CGrid_TPXO8.get_nc_CGrid_TPXO8(pth_tpxo+'grid_tpxo8atlas_30_v1.nc', \
-#       xrange=(4400, 5100), yrange=(5200, 6500))
-srcgrd_lr = CGrid_TPXO8.get_nc_CGrid_TPXO8(pth_tpxo+'grid_tpxo8atlas_30_v1.nc', name='TPXO8atlas6', \
-      xrange=(1400, 2400), yrange=(9000, 10000))
+srcgrd = CGrid_TPXO8.get_nc_CGrid_TPXO8(pth_tpxo+'/grid_tpxo8atlas_30_v1.nc', \
+      xrange=(4400, 5100), yrange=(5200, 6500))
+# srcgrd_lr = CGrid_TPXO8.get_nc_CGrid_TPXO8(pth_tpxo+'grid_tpxo8atlas_30_v1.nc', name='TPXO8atlas6', \
+#       xrange=(1400, 2400), yrange=(9000, 10000))
 
 missing_value = srcgrd.missing_value
 
@@ -74,8 +75,8 @@ missing_value = srcgrd.missing_value
 xrange = srcgrd.xrange
 yrange = srcgrd.yrange
 
-xrange_lr = srcgrd_lr.xrange
-yrange_lr = srcgrd_lr.yrange
+# xrange_lr = srcgrd_lr.xrange
+# yrange_lr = srcgrd_lr.yrange
 
 # initiate variables
 hamp = np.zeros((consts_num, eta, xi))*np.nan
@@ -201,15 +202,13 @@ if savedata == 1:
     # -------------------------------------------------------------------------
     # define tidal constituents names and periods
     tide_name = np.array([ list('Q1'), list('O1'), list('P1'), list('K1'),
-                           list('N2'), list('M2'), list('S2'), list('K2'),
-                           list('MF')])
+                           list('N2'), list('M2'), list('S2'), list('K2')])
     tide_period = np.array([26.8683567047119, 25.8193397521973, 24.0658893585205, 23.9344692230225,
-                            12.6583499908447, 12.420599937439, 12, 11.9672346115112,
-                            13.66079*24])
+                            12.6583499908447, 12.420599937439, 12, 11.9672346115112])
 
     # -------------------------------------------------------------------------
     # create nc file
-    fh = nc.Dataset('Chukchi2_tides_otps.nc', 'w')
+    fh = nc.Dataset(f'{roms_files}/sbb_tides_otps.nc', 'w')
     fh.createDimension('namelen', 4)
     fh.createDimension('tide_period', consts_num)
     fh.createDimension('eta_rho', eta)
