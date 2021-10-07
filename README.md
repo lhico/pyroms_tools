@@ -11,11 +11,10 @@ There are three files that configures the grid and interpolation details. **Idea
 
 ```
 .
-├── data
+├── configs
 │   ├── grid_config_esmf.txt
 │   ├── grid_config_pyroms.txt
 │   ├── gridid.txt
-│   └── roms_files
 (...)
 ```
 
@@ -60,7 +59,7 @@ We need to create roms grid:
 
 a. create a prototype grid: `make_grid_prototype.py` (pyroms, optional)
 
-b. create the grid: `make_grid_py` (pyroms)
+b. create the grid: `make_grid_.py` (pyroms)
 
 c. smooth the grid: `make_grid_smooth.py` (pyroms, optional).
 Grid smoothing should adjust the values rx0 (0\<rx0\<3) and rx1 (3\<rx0\<8) to avoid hydrostatic inconsistencies due to the s-coordinate system. These values are printed when roms simulation is started. (optional) 
@@ -77,7 +76,7 @@ b. interpolate the information onto roms grid: `make_ic_file.py` (pyroms)
 
 c. reinterpolate the information onto roms grid: `make_ic_file_replace.py` (xesmf)
 
-The third step is necessary in these scripts because the interpolation using pyroms created spurious horizontal TS gradients in idealized cases where the TS fields were  horizontally homogenous. For this reason I rewrote an interpolation script with xesmf that corrected the issue. **Warning: close to the coast I needed to interpolate the information with a nearest-neighbor approach, which is NOT general. This quick-fix worked in my case, but it needs further work.** 
+The third step is necessary in these scripts because the interpolation using pyroms created spurious horizontal TS gradients in idealized cases where the TS fields were  horizontally homogenous. For this reason I rewrote an interpolation script with xesmf that corrected the issue. **Warning: close to the coast I needed to interpolate the information with a nearest-neighbor approach. This approach is NOT general. This quick-fix worked in my case, but it needs further thought.** 
 
 ### **2.3 Boundary files**
 
