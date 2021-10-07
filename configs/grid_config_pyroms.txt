@@ -1,0 +1,69 @@
+{
+  'pbs_202109_glorys': {
+    'output_dir'       : '/home/otel/Dropbox/trabalho_irado/2021/postdoc/202101_caracterizacao_ambiental_PCSE/roms_tools_projetoBS1.2/data',
+    'bathy_file'       : '/home/otel/Dropbox/trabalho_irado/2021/postdoc/2021_data/bathymetry/swatl1/gebco.nc',
+    'grid.dxdy'        : 0.06,
+    'grid.xoffset'     : -0.8, 
+    'grid.yoffset'     : 0, 
+    'grid.WESN'        : [-46.8,-40.6,-31,-19],
+    'grid.rot'         : -0.7853981633974483,
+    'grid.N'           : 20,
+    'grid.theta_s'     : 4, 
+    'grid.theta_b'     : 2, 
+    'grid.Tcline'      : 10,
+    'smooth.capdepth'  : 2500,
+    'smooth.smooth'    : 0.2,
+    'ic.input_file'    : '/home/otel/Dropbox/trabalho_irado/2021/postdoc/2021_data/roms_files/Glorys/202108_control_experiment/phy-001-024-daily_55W30W35S15S_2019-08-01_12:00:00.nc',
+    'ic.grid_file'     : '/home/otel/Dropbox/trabalho_irado/2021/postdoc/2021_data/roms_files/Glorys/202108_control_experiment/glo_mask_bathy2.nc',
+    'ic.gridname'      : 'pbs_202109_glorys',
+    'ic.srcname'       :  'pbs_202109_glorys',
+    'ic.starttime'     : '2019-08-01T12:00:00',
+    'ic.source_xrange' : (1, 299),
+    'ic.source_yrange' : (1, 239),
+    'ic.varstr'        : {'depstr':'depth', 'latstr':'latitude', 'lonstr':'longitude'},
+    'ic.interp_varbs'  : ['zos', 'thetao', 'so'],
+    'ic.interp_varbs2' : ['so', 'thetao', 'zos', 'u', 'v'],
+    'bndry.srcfiles'   : '/home/otel/Dropbox/trabalho_irado/2021/postdoc/2021_data/roms_files/Glorys/202108_control_experiment/*phy*nc',
+    'bndry.srcgrid'    : '/home/otel/Dropbox/trabalho_irado/2021/postdoc/2021_data/roms_files/Glorys/202108_control_experiment/glo_mask_bathy2.nc',
+    'bndry.gridname'   : 'pbs_202109_glorys',   
+    'bndry.srcname'    : 'glorys',
+    'bndry.daterange'  : ['2019-08-01T12:00:00', '2019-09-01T12:00:00', '1D'],
+    'bndry.xrange'     : (1, 299),
+    'bndry.yrange'     : (1, 239),
+    'bndry.varstr'     : {'depstr':'depth', 'latstr':'latitude', 'lonstr':'longitude'}, 
+    'tpxo.xrange'      : (1300,2500),
+    'tpxo.yrange'      : (8750,10000), 
+    'tpxo.grid'        : '/home/otel/Dropbox/trabalho_irado/2021/postdoc/2021_data/roms_files/tpxo/grid_tpxo8atlas_30_v1.nc',
+    'tpxo.fpath'       : '/home/otel/Dropbox/trabalho_irado/2021/postdoc/2021_data/roms_files/tpxo/',
+    'tpxo.consts1'     : ['Q1', 'O1', 'P1', 'K1', 'N2', 'M2', 'S2', 'K2'],
+    'tpxo.consts2'     : [],
+    'comments'         : 'making the grid larger to the northeast doesnt affect the results in any positive way (smooth=0.25, N=30)',
+    'scalar_dict' : {
+      'zos': {
+        'varname': 'zeta',
+        'netcdf': {
+        'dimensions': ('ocean_time', 'eta_rho', 'xi_rho'),
+        'long_name': 'free-surface',
+        'units': 'meter',
+        'field': 'free-surface, scalar, series'},
+        },
+      'thetao': {
+        'varname': 'temp',
+        'netcdf': {
+            'dimensions': ('ocean_time', 's_rho', 'eta_rho', 'xi_rho'),
+            'long_name': 'potencial temperature',
+            'units': 'Celsius',
+            'field': 'temperature, scalar, series',}
+            },
+      'so': {
+        'varname': 'salt',
+        'netcdf': {
+            'dimensions': ('ocean_time', 's_rho', 'eta_rho', 'xi_rho'),
+            'long_name': 'Salintiy',
+            'units': 'psu',
+            'field': 'salinity, scalar, series',}
+          }   
+        },
+    },   
+
+}
