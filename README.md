@@ -35,9 +35,6 @@ The main scripts are placed at the `scripts` directory as follows:
 │   ├── make_bdry_remap_weight_files.py
 │   ├── make_grid_prototype.py
 │   ├── make_grid_.py
-│   ├── make_grid_refine1_interpolation.py
-│   ├── make_grid_refine2_interpolation.py
-│   ├── make_grid_refine.py
 │   ├── make_grid_smooth.py
 │   ├── make_ic_file.py
 │   ├── make_ic_file_replace.py
@@ -107,7 +104,7 @@ Since we use pyroms to interpolate information onto roms grid, it is necessary t
 
 
 
-
+<!---
 ## Nesting procedure (not completed)
 
 1 - Create coarse grid  CRS
@@ -120,3 +117,4 @@ Since we use pyroms to interpolate information onto roms grid, it is necessary t
 8 - run the final part in c
 9 - take the grid files and create the contact file (coarse2fine_group.m part B matlab)
 10 - if you are nesting you need to adjust the bathymetry between the fields. it is possible to make the adjustment by adapting the script script_aux/adjust_bathy. Remeber, the contour lines must be overlapping on the boundaries, otherwise the model will generate weird gradients in the contact points
+-->
