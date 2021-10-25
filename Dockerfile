@@ -31,7 +31,7 @@ RUN chmod a+rwx /home/lhico/ && cd /home/lhico/ &&\
 ENV PATH=/home/lhico/miniconda3/bin:${PATH}
 
 # clonning repository
-RUN cd /home/lhico/ && git clone https://github.com/hadfieldnz/pyroms-mgh pyroms3 &&\
+RUN cd /home/lhico/ && git clone -b  python3 https://github.com/ESMG/pyroms pyroms3 &&\
     cd pyroms3 &&\
     conda update -y conda
 
@@ -62,22 +62,23 @@ SITE_PACKAGES=/home/lhico/miniconda3/lib/python3.7/site-packages
 # installing PyROMS and other packages, such as bathy_smoother and pyroms_toolbox
 # and dependencias (csa, nn, gridutils, gridgen, natgrid)
 RUN cd $CURDIR/pyroms && python setup.py build && python setup.py install &&\
-cp -r $CURDIR/pyroms/pyroms/* /home/lhico/miniconda3/lib/python3.7/site-packages/pyroms/ &&\
-cd $CURDIR/pyroms_toolbox && python setup.py build && python setup.py install &&\
-cd $CURDIR/bathy_smoother && python setup.py build && python setup.py install &&\
-cd $CURDIR/pyroms/external/nn && ./configure && sudo make install &&\
-cd $CURDIR/pyroms/external/csa && ./configure && sudo make install &&\
-cd $CURDIR/pyroms/external/gridutils && ./configure && sudo make && sudo make install &&\
-cd $CURDIR/pyroms/external/gridgen && ./configure && sudo make &&\
-      sudo make lib && sudo make shlib && sudo make install
-#
+    cp -r $CURDIR/pyroms/pyroms/* /home/lhico/miniconda3/lib/python3.7/site-packages/pyroms/ &&\
+    cd $CURDIR/pyroms_toolbox && python setup.py build && python setup.py install &&\
+    cd $CURDIR/bathy_smoother && python setup.py build && python setup.py install
+
+#-- changing to root privileges to avoid nosuid related error --#
+USER root
+
+RUN cd $CURDIR/pyroms/external/nn && ./configure && sudo make install &&\
+    cd $CURDIR/pyroms/external/csa && ./configure && sudo make install &&\
+    cd $CURDIR/pyroms/external/gridutils && ./configure && sudo make && sudo make install &&\
+    cd $CURDIR/pyroms/external/gridgen && ./configure && sudo make &&\
+        sudo make lib && sudo make shlib && sudo make install
 
 ENV PREFIX=/home/lhico/miniconda3
 RUN cd $CURDIR/pyroms/external/scrip/source &&\
-make DEVELOP=1 PREFIX=$PREFIX install &&\
-cp scrip*so ../../../
-
-
+    make DEVELOP=1 PREFIX=$PREFIX install &&\
+    cp scrip*so ../../../
 
 RUN cd $CURDIR &&\
 cp -v  ./pyroms/external/scrip/source/scrip.*.so ${SITE_PACKAGES}/pyroms &&\
@@ -90,21 +91,24 @@ cp -v ./pyroms/build/lib.linux-x86_64-3.7/pyroms/_remapping_fast.cpython-37m-x86
 cp -v ./pyroms_toolbox/build/lib.linux-x86_64-3.7/pyroms_toolbox/creep.cpython-37m-x86_64-linux-gnu.so ${SITE_PACKAGES} &&\
 cp -v ./pyroms/build/lib.linux-x86_64-3.7/pyroms/_remapping_fast_weighted.cpython-37m-x86_64-linux-gnu.so ${SITE_PACKAGES}
 #RUN    cp -v ./bathy_smoother/build/lib.linux-x86_64-3.7/bathy_smoother/lpsolve55.cpython-37m-x86_64-linux-gnu.so ${SITE_PACKAGES}
-#
+
 # copying *.so installed on /usr/local/lib and installing natgrid
 RUN cd ${SITE_PACKAGES}/pyroms &&\
-sudo chmod ugo+x /usr/local/lib/libgridgen.so &&\
-sudo chmod ugo+x /usr/local/lib/libgu.so &&\
-sudo ln -s /usr/local/lib/libgridgen.so . &&\
-sudo ln -s /usr/local/lib/libgu.so . &&\
- sudo ln -s /usr/local/lib/scrip*.so scrip.so &&\
-cd ${HOME} && git clone https://github.com/matplotlib/natgrid.git && cd natgrid/ &&\
-python setup.py install
+    sudo chmod ugo+x /usr/local/lib/libgridgen.so &&\
+    sudo chmod ugo+x /usr/local/lib/libgu.so &&\
+    sudo ln -s /usr/local/lib/libgridgen.so . &&\
+    sudo ln -s /usr/local/lib/libgu.so . &&\
+    sudo ln -s /usr/local/lib/scrip*.so scrip.so &&\
+    cd ${HOME} && git clone https://github.com/matplotlib/natgrid.git && cd natgrid/ &&\
+    python setup.py install
 
 # lpsolve55 must be installed after bathy_smoother
 RUN conda install -y -c conda-forge lpsolve55
 
 ENV PYROMS_GRIDID_FILE=/home/lhico/data/gridid.txt
+
+#-- assigning to use the lhico user when entering the container--#
+USER lhico
 
 ##------------ CHANGES BELOW --------------###
 # setting project's name
