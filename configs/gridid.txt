@@ -1,7 +1,7 @@
 #
 id      = pbs_202109_glorys
 name    = pbs_202109_glorys
-grdfile = /home/otel/Dropbox/trabalho_irado/2021/postdoc/202101_caracterizacao_ambiental_PCSE/roms_tools_projetoBS1.2/data/roms_grid00.nc
+grdfile = /home/lhico/pyroms_tools/data/treated/roms_grid00.nc
 N       = 20
 grdtype = roms
 Vtrans  = 2
