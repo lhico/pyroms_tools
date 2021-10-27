@@ -31,24 +31,36 @@ RUN chmod a+rwx /home/lhico/ && cd /home/lhico/ &&\
 ENV PATH=/home/lhico/miniconda3/bin:${PATH}
 
 # clonning repository
-RUN cd /home/lhico/ && git clone https://github.com/hadfieldnz/pyroms-mgh pyroms3 &&\
-    cd pyroms3 &&\
-    conda update -y conda
+RUN conda update -y conda
+# clonning repository
+RUN cd /home/lhico
+RUN git clone https://github.com/ESMG/pyroms.git pyroms3
+WORKDIR /home/lhico/pyroms3
+RUN ls -a
 
-RUN conda install -y python=3.7 \
-                     numpy \
+# For an unknown reason, the removal of the following lines disturbs
+# the installation: some 'conda install' options fail
+# for comments see issue #2 in the repository 
+RUN git checkout 7bd751756a435db3e2519414f9f361510c9b5bcb
+RUN conda create --name test python=3.7
+
+RUN sudo rm /bin/sh && sudo ln -s /bin/bash /bin/sh
+RUN conda install -y python=3.7.7 \
+                     numpy=1.18 \
                      netcdf4 \
                      matplotlib=3.2 \
                      basemap \
                      scipy \
                      basemap-data-hires \
                      ipython \
-                     xarray
+                     xarray \
+                     libgfortran-ng=7.3
 
 RUN conda install -y -c conda-forge \
                       pygridgen
 
 RUN conda install -y --channel https://conda.anaconda.org/conda-forge esmf
+
 
 # setting environment variables
 # PROJ_LIB is needed to run basemap on python
