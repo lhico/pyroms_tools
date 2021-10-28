@@ -7,7 +7,7 @@ import os.path as osp
 import pandas as pd
 import glob
 from utils import utils as ut
-os.environ["PYROMS_GRIDID_FILE"] = "/home/otel/Dropbox/trabalho_irado/2021/postdoc/202101_caracterizacao_ambiental_PCSE/roms_tools_projetoBS1.2/configs/gridid.txt"
+os.environ["PYROMS_GRIDID_FILE"] = "/home/lhico/pyroms_tools/configs/gridid.txt"
 
 # plt.close('all')
 reference = 'pbs_202109_glorys'
