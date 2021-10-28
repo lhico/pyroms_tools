@@ -37,7 +37,7 @@ import pyroms
 import pyroms_toolbox
 
 import CGrid_TPXO8
-os.environ["PYROMS_GRIDID_FILE"] = "/home/otel/Dropbox/trabalho_irado/2021/postdoc/202101_caracterizacao_ambiental_PCSE/roms_tools_projetoBS1.2/configs/gridid.txt"
+os.environ["PYROMS_GRIDID_FILE"] = "/home/lhico/pyroms_tools/configs/gridid.txt"
 
 reference = 'pbs_202109_glorys'
 dicts = ut._get_dict_paths('../configs/grid_config_pyroms.txt')

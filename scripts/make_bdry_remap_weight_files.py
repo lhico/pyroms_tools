@@ -6,7 +6,7 @@ import xarray as xr
 import numpy as np
 from utils import utils as ut
 import os
-os.environ["PYROMS_GRIDID_FILE"] = "/home/otel/Dropbox/trabalho_irado/2021/postdoc/202101_caracterizacao_ambiental_PCSE/roms_tools_projetoBS1.2/configs/gridid.txt"
+os.environ["PYROMS_GRIDID_FILE"] = "/home/lhico/pyroms_tools/configs/gridid.txt"
 
 
 # -- gets  the information from the config file -- #
