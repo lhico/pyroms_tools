@@ -20,6 +20,59 @@ There are three files that configures the grid and interpolation details. **Idea
 
 Within these configuration files we have paths, grid configurations, variable names maps and other information that used by the scripts.
 
+### **1.1 Installation**
+
+These tools are based on PyROMS, which is not simple to compile. For this reason we provide a Dockerfile. The following commands will allow you to run a docker container with pyroms and work  with pyroms_tools:
+
+```
+git clone https://github.com/CoastalHydrodynamicsLab/pyroms_tools.git
+cd pyroms_tools
+
+#building your container
+sudo docker build -t pyroms_tools .
+
+#after installation:
+PREFIX=${PWD}
+export UID=$(id -u)
+sudo docker run -it --user=$UID -v $PREFIX/data:/home/lhico/data -v $PREFIX/scripts:/home/lhico/scripts pyroms
+
+```
+
+During the building step, the following error might appear:
+
+```bash
+sudo: effective uid is not 0, is /usr/bin/sudo on a file system with the 'nosuid' option set or an NFS file system without root privileges?
+```
+
+If this is your case, then you must use the ```Dockerfile.v2``` instead. To do this, try the following sequence of commands:
+
+```bash
+#building your container
+sudo docker build -t pyroms_tools . -f Dockerfile.v2
+
+#after installation:
+PREFIX=${PWD}
+export UID=$(id -u)
+sudo docker run -it --user=$UID -v $PREFIX/data:/home/lhico/data -v $PREFIX/scripts:/home/lhico/scripts pyroms
+
+```
+
+### **1.2 GUI interface with Docker**
+
+If you need to use the Graphic User Interface (GUI), you need to set up the paths from your machine to the docker container. In my case (Ubuntu 18.04), I did the following:
+
+```
+PREFIX=/your/pyroms_lhico/directory
+sudo docker run -it \
+   -v $PREFIX/data:/home/lhico/data \
+   -v $PREFIX/scripts2:/home/lhico/scripts \
+   -e DISPLAY=$DISPLAY \
+   -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
+    pyroms
+```
+
+We don't include the installation of X11 in the Dockerfile, because it depends on hardware. A more in-depth explanation may be found [here](https://stackoverflow.com/questions/25281992/alternatives-to-ssh-x11-forwarding-for-docker-containers)
+
 ## 2. Scripts structure
 
 The main scripts are placed at the `scripts` directory as follows:
