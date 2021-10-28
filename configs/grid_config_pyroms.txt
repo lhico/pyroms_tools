@@ -16,7 +16,7 @@
     'ic.input_file'    : '/home/lhico/pyroms_tools/data/raw/phy-001-024-daily_55W30W35S15S_2019-08-01_12:00:00.nc',
     'ic.grid_file'     : '/home/lhico/pyroms_tools/data/raw/glo_mask_bathy2.nc',
     'ic.gridname'      : 'pbs_202109_glorys',
-    'ic.srcname'       :  'pbs_202109_glorys',
+    'ic.srcname'       : 'pbs_202109_glorys',
     'ic.starttime'     : '2019-08-01T12:00:00',
     'ic.source_xrange' : (1, 299),
     'ic.source_yrange' : (1, 239),
