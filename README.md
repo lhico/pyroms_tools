@@ -34,7 +34,7 @@ sudo docker build -t pyroms_tools .
 #after installation:
 PREFIX=${PWD}
 export UID=$(id -u)
-sudo docker run -it --user=$UID -v $PREFIX/data:/home/lhico/data -v $PREFIX/scripts:/home/lhico/scripts pyroms
+sudo docker run -it --user=$UID -v $PREFIX:/home/lhico/pyroms_tools   pyroms
 
 ```
 
@@ -53,7 +53,7 @@ sudo docker build -t pyroms_tools . -f Dockerfile.v2
 #after installation:
 PREFIX=${PWD}
 export UID=$(id -u)
-sudo docker run -it --user=$UID -v $PREFIX/data:/home/lhico/data -v $PREFIX/scripts:/home/lhico/scripts pyroms
+sudo docker run -it --user=$UID -v $PREFIX:/home/lhico/pyroms_tools   pyroms
 
 ```
 
@@ -63,11 +63,10 @@ If you need to use the Graphic User Interface (GUI), you need to set up the path
 
 ```
 PREFIX=/your/pyroms_lhico/directory
-sudo docker run -it \
-   -v $PREFIX/data:/home/lhico/data \
-   -v $PREFIX/scripts2:/home/lhico/scripts \
-   -e DISPLAY=$DISPLAY \
-   -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
+sudo docker run -it  \
+    -v $PREFIX:/home/lhico/pyroms_tools \
+    -e DISPLAY=$DISPLAY \
+    -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
     pyroms
 ```
 
