@@ -141,12 +141,21 @@ b. interpolate the information onto roms grid: `make_bdry_file.py` (pyroms)
 
 ### **2.4 Tide files**
 
+
 After creating the grid file, you'll need to interpolate the tpxo data onto the grid. The tides are not forced by the boundary, nor the surface. It is a field to avoid sponges that may be set close to the boundary points. We have two steps in this case:
 
 a. create interpolation weights: `make_tpxo_files_remap_weight_file.py` (pyroms)
 
 b. interpolate the information onto roms grid: `make_tpxo_file.py` (pyroms)
 
+
+**ATTENTION!!!!!**: tpxo files are huge and we don't want to copy them repeatedly. Docker containers don't play well with symbolic links, so the workaround to have tpxo files in the right place is to map the volume directly from your computer onto a container directory. Below is an example of how to do it:
+
+```
+TPXOPATH=/home/otel/Dropbox/trabalho_irado/2021/postdoc/2021_data/roms_files/tpxo
+PREFIX=/path/to/pyroms_tools
+ sudo docker run -it -v $TPXOPATH:/home/lhico/pyroms_tools/data/raw/tpxo -v $PREFIX:/home/lhico/pyroms_tools pyroms
+```
 
 
 ### Interpolation
