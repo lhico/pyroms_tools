@@ -118,6 +118,8 @@ RUN conda install -y -c conda-forge lpsolve55
 
 ENV PYROMS_GRIDID_FILE=/home/lhico/data/gridid.txt
 
+WORKDIR /home/lhico
+
 ##------------ CHANGES BELOW --------------###
 # setting project's name
 #ENV project_name=data

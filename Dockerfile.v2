@@ -127,6 +127,8 @@ ENV PYROMS_GRIDID_FILE=/home/lhico/data/gridid.txt
 #-- assigning to use the lhico user when entering the container --#
 USER lhico
 
+WORKDIR /home/lhico
+
 ##------------ CHANGES BELOW --------------###
 # setting project's name
 #ENV project_name=data
