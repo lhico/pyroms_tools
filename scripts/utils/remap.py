@@ -179,16 +179,14 @@ def remap_uv(src_file, src_grd, dst_grd, starttime,
     # -- get missing values --#
     spval = src_varu._FillValue
     src_varu = np.squeeze(src_varu)
-    src_varu[np.isnan(src_varu)] = 9999
-    src_varu[src_varu > abs(10)] = 9999
-    spval = 9999
+    src_varu[np.isnan(src_varu)] = spval
+    src_varu[src_varu > abs(10)] = spval
     ndim = src_varu.ndim
 
     spval = src_varv._FillValue
     src_varv = np.squeeze(src_varv)
-    src_varv[np.isnan(src_varv)] = 9999
-    src_varv[src_varv > abs(10)] = 9999
-    spval = 9999
+    src_varv[np.isnan(src_varv)] = spval
+    src_varv[src_varv > abs(10)] = spval
     ndim = src_varv.ndim
     
     # -- cutting data from src netdf file -- #
