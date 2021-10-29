@@ -25,7 +25,7 @@ Within these configuration files we have paths, grid configurations, variable na
 These tools are based on PyROMS, which is not simple to compile. For this reason we provide a Dockerfile. The following commands will allow you to run a docker container with pyroms and work  with pyroms_tools:
 
 ```
-git clone https://github.com/CoastalHydrodynamicsLab/pyroms_tools.git
+git clone https://github.com/lhico/pyroms_tools.git
 cd pyroms_tools
 
 #building your container
