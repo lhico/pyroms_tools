@@ -53,7 +53,7 @@ sudo docker build -t pyroms_tools . -f Dockerfile.v2
 #after installation:
 PREFIX=${PWD}
 export UID=$(id -u)
-sudo docker run -it --user=$UID -v $PREFIX:/home/lhico/pyroms_tools   pyroms
+sudo docker run -it --user=$UID -v $PREFIX:/home/lhico/pyroms_tools   pyroms_tools
 
 ```
 
@@ -154,7 +154,7 @@ b. interpolate the information onto roms grid: `make_tpxo_file.py` (pyroms)
 ```
 TPXOPATH=/home/otel/Dropbox/trabalho_irado/2021/postdoc/2021_data/roms_files/tpxo
 PREFIX=/path/to/pyroms_tools
- sudo docker run -it -v $TPXOPATH:/home/lhico/pyroms_tools/data/raw/tpxo -v $PREFIX:/home/lhico/pyroms_tools pyroms
+ sudo docker run -it -v $TPXOPATH:/home/lhico/pyroms_tools/data/raw/tpxo -v $PREFIX:/home/lhico/pyroms_tools pyroms_tools
 ```
 
 
