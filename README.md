@@ -34,7 +34,7 @@ sudo docker build -t pyroms_tools .
 #after installation:
 PREFIX=${PWD}
 export UID=$(id -u)
-sudo docker run -it --user=$UID -v $PREFIX:/home/lhico/pyroms_tools   pyroms
+sudo docker run -it --user=$UID -v $PREFIX:/home/lhico/pyroms_tools   pyroms_tools
 
 ```
 
