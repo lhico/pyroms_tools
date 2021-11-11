@@ -25,7 +25,7 @@
     'ic.interp_varbs2' : ['so', 'thetao', 'zos', 'u', 'v'],
     'atmos.single'     : '/home/lhico/pyroms_tools/data/raw/era5/*single*nc',
     'atmos.pressure'   : '/home/lhico/pyroms_tools/data/raw/era5/*pressure*nc',
-    'atmos.rename'     : rename = {'u10': 'Uwind',
+    'atmos.rename'     : {'u10': 'Uwind',
                                    'v10': 'Vwind',
                                    't2m': 'Tair',
                                    'msl': 'Pair',
@@ -35,7 +35,8 @@
                                    'msnlwrf': 'lwrad',
                                    'longitude': 'lon',
                                    'latitude': 'lat'},
-    'atmos.str'         : 'reanalysis-era5-single-levels_%Y-%m-%d.nc'
+    'atmos.str'         : 'reanalysis-era5-single-levels_%Y-%m-%d.nc',
+    'atmos.lon_offset' : 0,
     'bndry.srcfiles'   : '/home/lhico/pyroms_tools/data/raw/*phy*nc',
     'bndry.srcgrid'    : '/home/lhico/pyroms_tools/data/raw/glo_mask_bathy2.nc',
     'bndry.gridname'   : 'pbs_202109_glorys',   
