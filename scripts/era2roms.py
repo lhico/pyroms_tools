@@ -3,9 +3,8 @@ import os.path as osp
 import glob
 import datetime as dtt
 from utils.barnier95 import dQdT
-import utils as ut
+from utils import utils as ut
 import os
-os.environ["PYROMS_GRIDID_FILE"] = "/home/lhico/pyroms_tools/configs/gridid.txt"
 
 def scaling(x):
     sf = x.attrs['scale_factor']
@@ -20,10 +19,11 @@ dicts = ut._get_dict_paths('../configs/grid_config_pyroms.txt')
 dicts = dicts[reference]
 
 rename       = dicts['atmos.rename']
-atmos_single = dicts['atmos.single']
-atmos_pressr = dicts['atmos.pressure']
-atmostr     = dicts['atmos.str']
+atmos_single = sorted(glob.glob(dicts['atmos.single']))
+atmos_pressr = sorted(glob.glob(dicts['atmos.pressure']))
+atmostr      = dicts['atmos.str']
 outdir       = dicts['output_dir']
+lonoffset    = 0
 
 
 for ia, ip in zip(atmos_single, atmos_pressr):
@@ -39,10 +39,10 @@ for ia, ip in zip(atmos_single, atmos_pressr):
 
     # -- renaming netcdf variables to roms requirments -- #
     keylist = list(rename.values())[:-2]
-    nc = nc.assign(longitude=lambda x: x.longitude + 360)
+    nc = nc.assign(longitude=lambda x: x.longitude + lonoffset)
     ncrename = nc.rename(rename)
 
-    # -- adjusting latitude to be monotonic increasing (roms doesn't like)
+    # -- adjusting latitude to be monotonic increasing (roms doesn't like
     # decreasing values --#
     ncrename['lat'] = ncrename['lat'][::-1]
     ncrename = ncrename.assign_coords({'time': ncrename['time'].values/24})
