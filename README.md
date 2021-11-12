@@ -11,7 +11,7 @@ There are three files that configures the grid and interpolation details. **Idea
 
 ```
 .
-├── configs
+├── configs 
 │   ├── grid_config_esmf.txt
 │   ├── grid_config_pyroms.txt
 │   ├── gridid.txt
