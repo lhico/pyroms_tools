@@ -122,7 +122,7 @@ python setup.py install
 # lpsolve55 must be installed after bathy_smoother
 RUN conda install -y -c conda-forge lpsolve55
 RUN conda install -y -c conda-forge importlib_metadata
-
+RUN git checkout pyroms3
 ENV PYROMS_GRIDID_FILE=/home/lhico/data/gridid.txt
 
 #-- assigning to use the lhico user when entering the container --#
