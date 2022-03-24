@@ -41,7 +41,7 @@ RUN ls -a
 # For an unknown reason, the removal of the following lines disturbs
 # the installation: some 'conda install' options fail
 # for comments see issue #2 in the repository 
-RUN git checkout 7bd751756a435db3e2519414f9f361510c9b5bcb
+# RUN git checkout 7bd751756a435db3e2519414f9f361510c9b5bcb
 RUN conda create --name test python=3.7
 
 #-- changing to root privileges to avoid nosuid related error --#
@@ -122,8 +122,8 @@ python setup.py install
 # lpsolve55 must be installed after bathy_smoother
 RUN conda install -y -c conda-forge lpsolve55
 RUN conda install -y -c conda-forge importlib_metadata
-RUN git checkout pyroms3
-ENV PYROMS_GRIDID_FILE=/home/lhico/data/gridid.txt
+
+# ENV PYROMS_GRIDID_FILE=/home/lhico/data/gridid.txt
 
 #-- assigning to use the lhico user when entering the container --#
 USER lhico
