@@ -38,7 +38,7 @@ sudo docker run -it --user=$UID -v $PREFIX:/home/lhico/pyroms_tools   pyroms_too
 
 ```
 
-During the building step, the following error might appear:
+<!-- During the building step, the following error might appear:
 
 ```bash
 sudo: effective uid is not 0, is /usr/bin/sudo on a file system with the 'nosuid' option set or an NFS file system without root privileges?
@@ -55,7 +55,7 @@ PREFIX=${PWD}
 export UID=$(id -u)
 sudo docker run -it --user=$UID -v $PREFIX:/home/lhico/pyroms_tools   pyroms_tools
 
-```
+``` -->
 
 ### **1.2 GUI interface with Docker**
 
