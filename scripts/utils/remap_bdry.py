@@ -1,3 +1,4 @@
+from distutils.command.sdist import sdist
 import numpy as np
 import os
 try:
@@ -14,6 +15,9 @@ from pyroms import _remapping
 
 class nctime(object):
     pass
+
+
+
 
 def remap_bdry(src_file, src_grd, dst_grd, src_varname, starttime,
                dst_file='', weight_file='', dmax=0,
@@ -212,16 +216,16 @@ def remap_bdry(src_file, src_grd, dst_grd, src_varname, starttime,
     if ndim == 3:
         # vertical interpolation from standard z level to sigma
         print('vertical interpolation from standard z level to sigma')
-        dst_var_north = pyroms.remapping.z2roms(dst_varz[::-1, Mp-1:Mp, 0:Lp],
+        dst_var_north = z2roms(dst_varz[::-1, Mp-1:Mp, 0:Lp],
                           dst_grdz, dst_grd, Cpos=Cpos, spval=spval,
                           flood=False, irange=(0, Lp), jrange=(Mp-1 ,Mp))
-        dst_var_south = pyroms.remapping.z2roms(dst_varz[::-1, 0:1, :],
+        dst_var_south = z2roms(dst_varz[::-1, 0:1, :],
                           dst_grdz, dst_grd, Cpos=Cpos, spval=spval,
                           flood=False, irange=(0, Lp), jrange=(0,1))
-        dst_var_east = pyroms.remapping.z2roms(dst_varz[::-1, :, Lp-1:Lp],
+        dst_var_east = z2roms(dst_varz[::-1, :, Lp-1:Lp],
                           dst_grdz, dst_grd, Cpos=Cpos, spval=spval,
                           flood=False, irange=(Lp-1, Lp), jrange=(0, Mp))
-        dst_var_west = pyroms.remapping.z2roms(dst_varz[::-1, :, 0:1],
+        dst_var_west = z2roms(dst_varz[::-1, :, 0:1],
                           dst_grdz, dst_grd, Cpos=Cpos, spval=spval,
                           flood=False, irange=(0, 1), jrange=(0, Mp))
     else:
@@ -429,31 +433,32 @@ def remap_bdry_uv(src_file, src_grd, dst_grd, starttime,
 
     # vertical interpolation from standard z level to sigma
     print('vertical interpolation from standard z level to sigma')
-    dst_u_north = pyroms.remapping.z2roms(dst_uz[::-1, Mp-2:Mp, 0:Lp],
+    dst_u_north = z2roms(dst_uz[::-1, Mp-2:Mp, 0:Lp],
                       dst_grdz, dst_grd, Cpos='rho', spval=spval,
                       flood=False, irange=(0,Lp), jrange=(Mp-2,Mp))
-    dst_u_south = pyroms.remapping.z2roms(dst_uz[::-1, 0:2, 0:Lp],
+    dst_u_south = z2roms(dst_uz[::-1, 0:2, 0:Lp],
                       dst_grdz, dst_grd, Cpos='rho', spval=spval,
                       flood=False, irange=(0,Lp), jrange=(0,2))
-    dst_u_east = pyroms.remapping.z2roms(dst_uz[::-1, 0:Mp, Lp-2:Lp],
+    dst_u_east = z2roms(dst_uz[::-1, 0:Mp, Lp-2:Lp],
                       dst_grdz, dst_grd, Cpos='rho', spval=spval,
                       flood=False, irange=(Lp-2,Lp), jrange=(0,Mp))
-    dst_u_west = pyroms.remapping.z2roms(dst_uz[::-1, 0:Mp, 0:2],
+    dst_u_west = z2roms(dst_uz[::-1, 0:Mp, 0:2],
                       dst_grdz, dst_grd, Cpos='rho', spval=spval,
                       flood=False, irange=(0,2), jrange=(0,Mp))
 
-    dst_v_north = pyroms.remapping.z2roms(dst_vz[::-1, Mp-2:Mp, 0:Lp],
+    dst_v_north = z2roms(dst_vz[::-1, Mp-2:Mp, 0:Lp],
                       dst_grdz, dst_grd, Cpos='rho', spval=spval,
                       flood=False, irange=(0,Lp), jrange=(Mp-2,Mp))
-    dst_v_south = pyroms.remapping.z2roms(dst_vz[::-1, 0:2, 0:Lp],
+    dst_v_south = z2roms(dst_vz[::-1, 0:2, 0:Lp],
                       dst_grdz, dst_grd, Cpos='rho', spval=spval,
                       flood=False, irange=(0,Lp), jrange=(0,2))
-    dst_v_east = pyroms.remapping.z2roms(dst_vz[::-1, 0:Mp, Lp-2:Lp],
+    dst_v_east = z2roms(dst_vz[::-1, 0:Mp, Lp-2:Lp],
                       dst_grdz, dst_grd, Cpos='rho', spval=spval,
                       flood=False, irange=(Lp-2,Lp), jrange=(0,Mp))
-    dst_v_west = pyroms.remapping.z2roms(dst_vz[::-1, 0:Mp, 0:2],
+    dst_v_west = z2roms(dst_vz[::-1, 0:Mp, 0:2],
                       dst_grdz, dst_grd, Cpos='rho', spval=spval,
                       flood=False, irange=(0,2), jrange=(0,Mp))
+
 
     # rotate u,v fields
     src_angle = src_grd.angle
@@ -494,6 +499,17 @@ def remap_bdry_uv(src_file, src_grd, dst_grd, starttime,
     dst_v_east = 0.5 * np.squeeze(dst_v_east[:,:-1,-1] + dst_v_east[:,1:,-1])
     dst_u_west = 0.5 * np.squeeze(dst_u_west[:,:,:-1] + dst_u_west[:,:,1:])
     dst_v_west = 0.5 * np.squeeze(dst_v_west[:,:-1,0] + dst_v_west[:,1:,0])
+
+    if dst_u_north.ndim == 1:
+        dst_u_north = dst_u_north.reshape(1,dst_u_north.size)
+        dst_u_south = dst_u_south.reshape(1,dst_u_south.size)
+        dst_u_east = dst_u_east.reshape(1,dst_u_east.size)
+        dst_u_west = dst_u_west.reshape(1,dst_u_west.size)
+        dst_v_north = dst_v_north.reshape(1,dst_v_north.size)
+        dst_v_south = dst_v_south.reshape(1,dst_v_south.size)
+        dst_v_east = dst_v_east.reshape(1,dst_v_east.size)
+        dst_v_west = dst_v_west.reshape(1,dst_v_west.size)
+
 
     # spval
     idxu_north = np.where(dst_grd.hgrid.mask_u[-1,:] == 0)
@@ -588,3 +604,103 @@ def remap_bdry_uv(src_file, src_grd, dst_grd, starttime,
     ncu.close()
     ncv.close()
     cdf.close()
+
+
+def z2roms(varz, grdz, grd, Cpos='rho', irange=None, jrange=None, \
+           spval=1e37, flood=True, dmax=0, cdepth=0, kk=0, \
+           mode='linear'):
+    """
+    var = z2roms(var, grdz, grd)
+
+    optional switch:
+      - Cpos='rho', 'u' or 'v'       specify the C-grid position where
+                                     the variable rely
+      - irange                       specify grid sub-sample for i direction
+      - jrange                       specify grid sub-sample for j direction
+      - spval=1e37                   define spval value
+      - dmax=0                       if dmax>0, maximum horizontal
+                                     flooding distance
+      - cdepth=0                     critical depth for flooding
+                                     if depth<cdepth => no flooding
+      - kk
+      - mode='linear' or 'spline'    specify the type of interpolation
+
+    Interpolate the variable from z vertical grid grdz to ROMS grid grd
+    """
+
+    varz = varz.copy()
+
+    assert len(varz.shape) == 3, 'var must be 3D'
+
+    if mode=='linear':
+        imode=0
+    elif mode=='spline':
+        imode=1
+    else:
+        raise Warning('%s not supported, defaulting to linear' % mode)
+
+    if Cpos == 'rho':
+        z = grdz.vgrid.z[:]
+        depth = grd.vgrid.z_r[0,:]
+        mask = grd.hgrid.mask_rho
+    elif Cpos == 'u':
+        z = 0.5 * (grdz.vgrid.z[:,:,:-1] + grdz.vgrid.z[:,:,1:])
+        depth = 0.5 * (grd.vgrid.z_r[0,:,:,:-1] + grd.vgrid.z_r[0,:,:,1:])
+        mask = grd.hgrid.mask_u
+    elif Cpos == 'v':
+        z = 0.5 * (grdz.vgrid.z[:,:-1,:] + grdz.vgrid.z[:,1:,:])
+        depth = 0.5 * (grd.vgrid.z_r[0,:,:-1,:] + grd.vgrid.z_r[0,:,1:,:])
+        mask = grd.hgrid.mask_v
+    elif Cpos == 'w':
+        z = grdz.vgrid.z[:]
+        depth = grd.vgrid.z_w[0,:]
+        mask = grd.hgrid.mask_rho
+    else:
+        raise Warning('%s bad position. Use depth at Arakawa-C \
+                             rho points instead.' % Cpos)
+
+    nlev, Mm, Lm = varz.shape
+
+    if depth.ndim==2:
+        shape = depth.shape
+        depth = depth.reshape([1,shape[0],shape[1]])
+
+    Nm = depth.shape[0]
+
+    if irange is None:
+        irange = (0,Lm)
+    else:
+        assert varz.shape[2] == irange[1]-irange[0], \
+               'var shape and irange must agree'
+
+    if jrange is None:
+        jrange = (0,Mm)
+    else:
+        assert varz.shape[1] == jrange[1]-jrange[0], \
+               'var shape and jrange must agree'
+
+    # flood varz if requested
+    if flood:
+        varz = pyroms.remapping.flood(varz, grdz, Cpos=Cpos, \
+                 irange=irange, jrange=jrange, spval=spval, \
+                 dmax=dmax, cdepth=cdepth, kk=kk)
+
+    varz = np.concatenate((varz[0:1,:,:], varz, varz[-1:,:,:]), 0)
+    z = np.concatenate((-9999*np.ones((1,z.shape[1], z.shape[2])), \
+           z, \
+           100*np.ones((1,z.shape[1], z.shape[2]))), 0)
+
+    var = np.ma.zeros((Nm, Mm, Lm))
+    
+
+    for k in range(Nm):
+        var[k,:,:] = pyroms._interp.xhslice(varz, \
+                      z[:,jrange[0]:jrange[1], irange[0]:irange[1]], \
+                      depth[k,jrange[0]:jrange[1], irange[0]:irange[1]], \
+                      mask[jrange[0]:jrange[1], irange[0]:irange[1]], \
+                      imode, spval)
+        #mask
+        var = np.ma.masked_values(var, spval, rtol=1e-5)
+        #var[k,:,:] = np.ma.masked_where(mask == 0, var[k,:,:])
+
+    return var
