@@ -33,6 +33,8 @@ cd pyroms_tools
 docker pull oteldks/pyroms_tools:latest
 
 #run container after installation:
+PREFIX=${PWD}
+export UID=$(id -u)
 sudo docker run -t -it --user=$UID -v $PREFIX:/home/lhico/pyroms_tools  oteldks/pyroms_tools:latest
 ```
 
