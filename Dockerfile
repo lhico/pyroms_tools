@@ -34,7 +34,7 @@ ENV PATH=/home/lhico/miniconda3/bin:${PATH}
 RUN conda update -y conda
 # clonning repository
 RUN cd /home/lhico
-RUN git clone https://github.com/ESMG/pyroms.git pyroms3
+RUN git clone https://github.com/lhico/pyroms.git pyroms3
 WORKDIR /home/lhico/pyroms3
 RUN ls -a
 
