@@ -3,3 +3,4 @@ scripts/utils/__pycache__
 otherscripts/utils/__pycache__
 data/*
 !data/.empty
+**/scripts/*.nc
