@@ -6,3 +6,4 @@ data/*
 **/scripts/*.nc
 **/scripts/utils/*.c
 **/scripts/utils/*.so
+**/__pycache__
