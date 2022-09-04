@@ -4,3 +4,5 @@ otherscripts/utils/__pycache__
 data/*
 !data/.empty
 **/scripts/*.nc
+**/scripts/utils/*.c
+**/scripts/utils/*.so
