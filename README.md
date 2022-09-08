@@ -53,6 +53,8 @@ sudo docker run -it --user=$UID -v $PREFIX:/home/lhico/pyroms_tools   pyroms_too
 
 ```
 
+If you have problems with the command `python somescript.py` within the container, please type `source ~/.bashrc` to activate conda environment.
+
 <!-- During the building step, the following error might appear:
 
 ```bash
