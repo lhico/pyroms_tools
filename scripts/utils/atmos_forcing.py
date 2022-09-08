@@ -152,21 +152,47 @@ def scaling(x):
 
 ###############################################################################
 
-# internal function to extrapolate using xESMF function
-def _extrapolate_xesmf(dsout, dst, mask, varname, method_interp='bilinear', method_extrap='inverse_dist'):
+
+def _extrapolate_xesmf(dsout, dst, mask, varb, method_interp='bilinear', method_extrap='inverse_dist'):
     """
+    internal function to extrapolate using xESMF function
+
+    :param dsout: xarray.Dataset
+        dataset with input data to interpolate to
+    :param dst:
+        dataset containing the output grid we desire to interpolate to       
+    :param mask: xarray.DataArray
+        land mask created from SST ERA5 data
+    :param varb: str
+        variables name, must exist in dsout
+    :param method_interp: str
+        interpolation method. Default is bilinear and options are the same as in the xESMF options
+    :param method_extrap: str
+        extrapolation method. Default is inverse_dist.
+    :returns: xarray.Dataset
     """
     import xesmf as xe
 
     dsout['mask'] = mask
     regridder = xe.Regridder(dsout, dst, method=method_interp, extrap_method=method_extrap)
-    dsout = regridder(dsout[varname]).to_dataset(name=varname)
+    dsout = regridder(dsout[varb]).to_dataset(name=varb)
 
     return dsout
 
-# internal function to extraploate using the Laplace operator
+###############################################################################
+
+
 def _extrapolate_laplace(src, mask, varb):
     """
+    internal function to extraploate using the Laplace operator
+
+    :param src: xarray.Dataset
+        dataset containing all variables
+    :param mask: xarray.DataArray
+        land mask created from SST ERA5 data
+    :param varb: str
+        variables name, must exist in src
+    :returns: xarray.Dataset
     """
     import utils.extrapolate as ex
 
@@ -210,7 +236,9 @@ def _extrapolate_laplace(src, mask, varb):
 
     return dsout
 
-# main function to extrapolate the data
+###############################################################################
+
+
 def extrapolating_era5(src, varb, sst, extrapolate_method='laplace', dst=None, mask=None):
     """
     This function only extrapolate ocean data onto the land, using the SST landmask from the ERA5 dataset. It is important
@@ -235,3 +263,203 @@ def extrapolating_era5(src, varb, sst, extrapolate_method='laplace', dst=None, m
         raise ValueError(f"Method unavailable ({extrapolate_method}. Please select a valid option: laplaca or xesmf")
 
     return dsout
+
+###############################################################################
+
+
+# ATMOSPHERIC VARIABLES MAP [ECMWF-ERA5 // ROMS]
+# structure based on ROMS.jl (Alexander Barth), which was based on d_ecmwf2roms.m 
+# from Arango and Wilkins
+dt = 1 # in hour because it will be converted to seconds
+
+variables_list = {
+    'msl' : {
+        'ECMWFlongname': 'mean_sea_level_pressure',
+        'Vname': 'Pair',
+        'accumulation': False,
+        'outputName': 'Pair',
+        'scale': 0.01, # Pa to mb
+        'units': 'mb',
+        'time': 'pair_time'
+    },
+    'u10' : {
+        'ECMWFlongname': '10m_u_component_of_wind',
+        'Vname': 'Uwind',
+        'accumulation': False,
+        'outputName': 'Uwind',
+        'scale': 1.0,
+        'units': 'm s-1',
+        'time': 'wind_time'
+    },
+    'v10' : {
+        'ECMWFlongname': '10m_v_component_of_wind',
+        'Vname': 'Vwind',
+        'accumulation': False,
+        'outputName': 'Vwind',
+        'scale': 1.0,
+        'units': 'm s-1',
+        'time': 'wind_time'
+    },
+    't2m' : {
+        'ECMWFlongname': '2m_temperature',
+        'Vname': 'Tair',
+        'accumulation': False,
+        'outputName': 'Tair',
+        'scale': 1.0,
+        'units': 'degC',
+        'time': 'tair_time'
+    },
+    'tcc' : {
+        'ECMWFlongname': 'total_cloud_cover',
+        'Vname': 'cloud',
+        'accumulation': False,
+        'outputName': 'cloud',
+        'scale': 1.0,
+        'units': '',
+        'time': 'cloud_time'
+    },
+    'msshf' : {
+        'ECMWFlongname': 'surface_sensible_heat_flux',
+        'Vname': 'sensible',
+        'accumulation': True,
+        'outputName': 'sensible',
+        'scale': -1.0/(dt*3600),
+        'units': 'W m-2',
+        'time': 'shf_time'
+    },
+    'mslhf' : {
+        'ECMWFlongname': 'surface_latent_heat_flux',
+        'Vname': 'latent',
+        'accumulation': True,
+        'outputName': 'latent',
+        'scale': -1.0/(dt*3600),
+        'units': 'W m-2',
+        'time': 'lhf_time'
+    },
+    'msnlwrf' : { # str
+        'ECMWFlongname': 'surface_net_thermal_radiation',
+        'Vname': 'lwrad',
+        'accumulation': True,
+        'outputName': 'lwrad',
+        'scale': 1.0/(dt*3600),
+        'units': 'W m-2',
+        'time': 'lrf_time'
+    },
+    'msdwlwrf' : { # strd
+        'ECMWFlongname': 'surface_thermal_radiation_downwards',
+        'Vname': 'lwrad_down',
+        'accumulation': True,
+        'outputName': 'lwrad_down',
+        'scale': 1.0/(dt*3600),
+        'units': 'W m-2',
+        'time': 'lrf_time'
+    },
+    'ssr' : {
+        'ECMWFlongname': 'surface_net_solar_radiation',
+        'Vname': 'swrad',
+        'accumulation': True,
+        'outputName': 'swrad',
+        'scale': 1.0/(dt*3600),
+        'units': 'W m-2',
+        'time': 'srf_time'
+    },
+    'msnswrf' : {
+        'ECMWFlongname': 'mean_surface_net_short_wave_radiation_flux',
+        'Vname': 'swrad',
+        'accumulation': True,
+        'outputName': 'swrad',
+        'scale': 1.0/(dt*3600),
+        'units': 'W m-2',
+        'time': 'srf_time'
+    },
+    'metss' : { # wess
+        'ECMWFlongname': 'eastward_turbulent_surface_stress',
+        'Vname': 'sustr',
+        'accumulation': True,
+        'outputName': 'sustr',
+        'scale': 1.0/(dt*3600),
+        'units': 'N m-2'
+    },
+    'mntss' : { # nsss
+        'ECMWFlongname': 'northward_turbulent_surface_stress',
+        'Vname': 'svstr',
+        'accumulation': True,
+        'outputName': 'svstr',
+        'scale': 1.0/(dt*3600),
+        'units': 'N m-2'
+    },
+    'mtpr' : {
+        'ECMWFlongname': 'total_precipitation',
+        'Vname': 'rain',
+        'accumulation': True,
+        'outputName': 'rain',
+        'scale': 1.0/(dt*3600), #1000.0/(dt*3600)
+        'time': 'rain_time'
+        #'units': 'kg m-2 s-1'
+    },
+    'tp' : {
+        'ECMWFlongname': 'total_precipitation',
+        'Vname': 'rain',
+        'accumulation': True,
+        'outputName': 'rain',
+        'scale': 1000.0/(dt*3600),
+        'time': 'rain_time',
+        'units': 'kg m-2 s-1'
+    },
+    'mer' : {
+        'ECMWFlongname': 'evaporation',
+        'Vname': 'e',
+        'accumulation': True,
+        'outputName': 'e',
+        'scale': 1.0/(dt*3600), #1000.0/(dt*3600)
+        'time': 'evap_time'
+        #'units': 'kg m-2 s-1'
+    },
+    'sst' : {
+        'ECMWFlongname': 'sea_surface_temperature',
+        'Vname': 'SST',
+        'accumulation': False,
+        'outputName': 'SST',
+        'scale': 1,
+        'units': 'degC',
+        'time': 'sst_time'
+    },
+
+    # variables to be derived from other variables
+    'q' : {
+        'ECMWFlongname': '2m_dewpoint_temperature',
+        'Vname': 'Qair',
+        'accumulation': False,
+        'outputName': 'Qair',
+        'scale': 1.0,
+        'units': 'percentage',
+        'time': 'qair_time'
+    },
+    'shflux' : {
+        'ECMWFlongname': '',
+        'Vname': 'shflux',
+        'accumulation': True,
+        'outputName': 'shflux',
+        'scale': 1.0/(dt*3600),
+        'units': 'W m-2',
+        'time': 'shf_time'
+    },
+    'swflux' : {
+        'ECMWFlongname': '',
+        'Vname': 'swflux',
+        'accumulation': True,
+        'outputName': 'swflux',
+        'scale': 1/1000, #-100. / (dt*3600.)*(24*3600), # (Arango's scripts)
+        'units': 'm s-1',
+        'time': 'swf_time'
+    },
+    'dQdSST' : {
+        'ECMWFlongname': '',
+        'Vname': 'dQdSST',
+        'accumulation': True,
+        'outputName': 'dQdSST',
+        'scale': 1,
+        'units': 'W m-2 degC-1',
+        'time': 'sst_time'
+    },
+}
