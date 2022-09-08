@@ -28,7 +28,6 @@ RUN chmod a+rwx /home/lhico/ && cd /home/lhico/ &&\
     bash Miniconda3-py37_4.12.0-Linux-x86_64.sh -p /home/lhico/miniconda3 -b &&\
     rm Miniconda3-py37_4.12.0-Linux-x86_64.sh
 
-
 ENV PATH="${PATH}:/home/lhico/miniconda3/bin"
 
 # clonning repository
@@ -37,7 +36,6 @@ ENV PATH="${PATH}:/home/lhico/miniconda3/bin"
 RUN cd /home/lhico
 RUN git clone https://github.com/lhico/pyroms.git pyroms3
 WORKDIR /home/lhico/pyroms3
-
 
 # For an unknown reason, the removal of the following lines disturbs
 # the installation: some 'conda install' options fail

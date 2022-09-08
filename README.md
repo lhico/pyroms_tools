@@ -82,7 +82,7 @@ sudo docker run -it  \
     -v $PREFIX:/home/lhico/pyroms_tools \
     -e DISPLAY=$DISPLAY \
     -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
-    pyroms_tools
+    oteldks/pyroms_tools: latest
 ```
 
 We don't include the installation of X11 in the Dockerfile, because it depends on hardware. A more in-depth explanation may be found [here](https://stackoverflow.com/questions/25281992/alternatives-to-ssh-x11-forwarding-for-docker-containers)
