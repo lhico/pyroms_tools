@@ -1,9 +1,5 @@
 # code based on d_ecmwf2roms.m from Hernan Arango and John Wilkin
 
-# TODO: acrescentar a feature de salvar cada variavel com o nome da dimensao tempo adequado
-#       por exemplo: Tair é tair_time, Cloud é cloud_time. Assim ficará de acordo com o 
-#       varinfo.dat
-
 # making sure we are in the right folder to load local scripts
 import os
 os.chdir("/home/danilo/phd/thesis/chapter3_driving/scripts/pyroms_tools/scripts")
@@ -12,8 +8,8 @@ import sys
 import xarray as xr
 from glob import glob
 
-from utils.atmos_forcing import relative_humidity, dQdT, scaling, extrapolating_era5
-from variables_dict_ecmwf import variables_list
+from utils.atmos_forcing import relative_humidity, dQdT, scaling, extrapolating_era5, variables_list
+# from variables_dict_ecmwf import variables_list
 from utils import utils as ut
 
 # -- gets  the information from the config file -- #
@@ -21,7 +17,7 @@ from utils import utils as ut
 if len(sys.argv) > 1:
     reference = sys.argv[1]
 else:
-    reference = 'deproas_v2002'
+    reference = 'bulkfluxes'
 
 dicts = ut._get_dict_paths('../../../config/grid_config_pyroms.txt')[reference]
 
@@ -41,7 +37,7 @@ extrap = dicts['atmos.extrap']
 # note that we complement the path with the suffix used to save the ECMWF files in the line #158
 experiment_suffix = "" #reference+
 datadir = dicts['atmos.listfiles']
-extrapolating_era5
+
 # where final forcing files must be saved
 savedir = dicts['atmos.savedir']
 
@@ -52,9 +48,10 @@ print(f'[SETTINGS] Settings variables list to create forcing files:')
 print(f"[SETTINGS] Extrapolation set as {extrap}\n[SETTINGS] BULK FLUXES set as {bulkfluxes}\n[SETTINGS] Mean rate set as {mean_rate}")
 
 if bulkfluxes == True:
-    vars = ['msl', 'u10', 'v10', 't2m', 'tcc', 'sshf', 
-            'slhf', 'tp', 'str', 'strd', 'ssr', 'q', 
-            'sst', 'dQdSST']
+    # vars = ['msl', 'u10', 'v10', 't2m', 'tcc', 'sshf', 
+    #         'slhf', 'tp', 'str', 'strd', 'ssr', 'q', 
+    #         'sst', 'dQdSST']
+    vars = ['msl', 'u10', 'v10', 't2m', 'tcc', 'tp', 'ssr', 'q', 'str']
 elif bulkfluxes == False:
     if mean_rate:
         vars = ['shflux', 'swflux', 'metss', 'mntss', 'msnswrf', 'dQdSST', 'sst']
@@ -213,7 +210,7 @@ for varname in vars:
 
     # the next commented lines are usefull when using xESMF to interpolate from ERA5 domain to ROMS domains. However, we are
     # not doing this, so I left this piece of code commented just to remember how to implement this functionality.
-    # if extrap != 'xesmf':
+    # if extrap == 'xesmf':
     #     # rename to ROMS name
     #     dsout = dsout.rename({varname: metadata['outputName'],
     #                             'latitude': 'lat',
@@ -240,7 +237,8 @@ for varname in vars:
 
     dsout = dsout.assign_coords({'time': dsout['time'].values/24})
     dsout['time'].attrs['units'] = 'days since 1900-01-01 00:00:00.0'
-    dsout[metadata['outputName']].attrs['time'] = 'time'
+    # replacing temporal axis name
+    dsout[metadata['outputName']].attrs['time'] = metadata['time']
 
     fout = f"{savedir}/{preffix}_{metadata['outputName']}{experiment_suffix}.nc"
     dsout.to_netcdf(fout, format='NETCDF4')
