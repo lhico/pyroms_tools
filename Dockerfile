@@ -24,19 +24,18 @@ WORKDIR /home/lhico/
 
 # Install miniconda to /miniconda
 RUN chmod a+rwx /home/lhico/ && cd /home/lhico/ &&\
-    curl -LO http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh &&\
-    bash Miniconda3-latest-Linux-x86_64.sh -p /home/lhico/miniconda3 -b &&\
-    rm Miniconda3-latest-Linux-x86_64.sh
+    curl -LO https://repo.anaconda.com/miniconda/Miniconda3-py37_4.12.0-Linux-x86_64.sh &&\
+    bash Miniconda3-py37_4.12.0-Linux-x86_64.sh -p /home/lhico/miniconda3 -b &&\
+    rm Miniconda3-py37_4.12.0-Linux-x86_64.sh
 
-ENV PATH=/home/lhico/miniconda3/bin:${PATH}
+ENV PATH="${PATH}:/home/lhico/miniconda3/bin"
 
 # clonning repository
-RUN conda update -y conda
+# RUN conda update -y conda
 # clonning repository
 RUN cd /home/lhico
 RUN git clone https://github.com/lhico/pyroms.git pyroms3
 WORKDIR /home/lhico/pyroms3
-RUN ls -a
 
 # For an unknown reason, the removal of the following lines disturbs
 # the installation: some 'conda install' options fail
@@ -48,6 +47,10 @@ RUN conda create --name test python=3.7
 USER root
 
 RUN sudo rm /bin/sh && sudo ln -s /bin/bash /bin/sh
+RUN echo $PYTHONPATH
+
+
+
 RUN conda install -y python=3.7.7 \
                      numpy=1.18 \
                      netcdf4=1.5.6 \
@@ -73,6 +76,9 @@ ENV PROJ_LIB="/home/lhico/miniconda3/share/proj" \
 PYTHONPATH=/home/lhico/miniconda3/lib/python3.7/site-packages/:${PYTHONPATH} \
 CURDIR=/home/lhico/pyroms3 \
 SITE_PACKAGES=/home/lhico/miniconda3/lib/python3.7/site-packages
+
+SHELL ["conda", "run", "-n", "base", "/bin/bash", "-c"]
+# RUN which python
 
 # installing PyROMS and other packages, such as bathy_smoother and pyroms_toolbox
 # and dependencias (csa, nn, gridutils, gridgen, natgrid)

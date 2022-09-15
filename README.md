@@ -22,8 +22,23 @@ Within these configuration files we have paths, grid configurations, variable na
 
 ### **1.1 Installation**
 
-These tools are based on PyROMS, which is not simple to compile. For this reason we provide a Dockerfile. The following commands will allow you to run a docker container with pyroms and work  with pyroms_tools:
+These tools are based on PyROMS, which is not simple to compile. For this reason we provide a docker image and a Dockerfile. There are two ways to install it. The following commands will allow you to run a docker container with pyroms and work  with pyroms_tools:
 
+1) Pulling from a docker image (recommended)
+```
+git clone https://github.com/lhico/pyroms_tools.git
+cd pyroms_tools
+
+#pulling your container
+docker pull oteldks/pyroms_tools:latest
+
+#run container after installation:
+PREFIX=${PWD}
+export UID=$(id -u)
+sudo docker run -t -it --user=$UID -v $PREFIX:/home/lhico/pyroms_tools  oteldks/pyroms_tools:latest
+```
+
+2) Building from a docker file (not recommended).
 ```
 git clone https://github.com/lhico/pyroms_tools.git
 cd pyroms_tools
@@ -31,12 +46,14 @@ cd pyroms_tools
 #building your container
 sudo docker build -t pyroms_tools .
 
-#after installation:
+#run container after installation:
 PREFIX=${PWD}
 export UID=$(id -u)
 sudo docker run -it --user=$UID -v $PREFIX:/home/lhico/pyroms_tools   pyroms_tools
 
 ```
+
+If you have problems with the command `python somescript.py` within the container, please type `source ~/.bashrc` to activate conda environment.
 
 <!-- During the building step, the following error might appear:
 
@@ -67,7 +84,7 @@ sudo docker run -it  \
     -v $PREFIX:/home/lhico/pyroms_tools \
     -e DISPLAY=$DISPLAY \
     -v /tmp/.X11-unix:/tmp/.X11-unix:ro \
-    pyroms_tools
+    oteldks/pyroms_tools: latest
 ```
 
 We don't include the installation of X11 in the Dockerfile, because it depends on hardware. A more in-depth explanation may be found [here](https://stackoverflow.com/questions/25281992/alternatives-to-ssh-x11-forwarding-for-docker-containers)
