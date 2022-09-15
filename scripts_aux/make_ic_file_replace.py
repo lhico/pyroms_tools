@@ -7,6 +7,8 @@ import xesmf as xe
 from scipy import interpolate
 from utils import utils as ut
 import os
+from scipy.spatial import cKDTree
+
 
 def compute_depth_layers(ds, hmin=0.1):
     """ compute depths of ROMS vertical levels (Vtransform = 2) """
@@ -58,39 +60,59 @@ def interpolation(fpath, nc_roms_grd, source_grid, target_grid):
     return interpvarb
 
 
-def extrapolation_repensar(var, direc='x'):
+def extrapolation_nearest(x,y,var, maskvalue=None):
+    "nearest-neighbor extrapolation with cKDTree method"
+    
     varx = var.copy()
-    varx[var==0] = np.nan
+    # mask values to nan (if varx does not use nan as mask already)
+    if maskvalue is not None:
+        varx[var==maskvalue] = np.nan
+    
+    varz = varx.copy()  # output variable
+
+    # if coordinates are not 2D (we make them 2D)
+    if (x.ndim == 1):
+        x, y = np.meshgrid(x,y)
+
+
+    n = var.shape[0]  # used to print percentage
     for k in range(var.shape[0]):
-        for i in range(var.shape[1]):
-            print(i)
-            inan = np.isnan(var[k,i,:])
-            j = np.where(~inan)[0]
-            if j.size>0:
-                j = j[0]
-                varx[k,i,:][inan] = var[k,i,j]
+        # we will look for poinst with data and extrapolate their value
+        # to nearest neighbors with no data
 
-    vary = var.copy()
-    vary[var==0] = np.nan
-    for k in range(var.shape[0]):
-        for i in range(var.shape[2]):
-            print(i)
-            inan = np.isnan(var[k,:,i])
-            j = np.where(~inan)[0]
-            if j.size>0:
-                j = j[0]
-                vary[k,:,i][inan] = var[k,j,i]
+        print(f'nearest extrapolation: {k/n*100:0.2f}%', end='\r')
+        idxnan = np.where(np.isnan(varx[k]))  # point with no data
+        idx    = np.where(~np.isnan(varx[k])) # point with data
 
-    if direc=='x':
-        varout = varx
-    elif direc=='y':
-        varout=vary
-    else:
-        varout=(varx + vary)/2
-    return varout
+        # set up arrays to be used in CKDTree
+        wet = np.zeros((len(idx[0]),2)).astype(int)
+        dry = np.zeros((len(idxnan[0]),2)).astype(int)
+        wet[:,0] = idx[0].astype(int)
+        wet[:,1] = idx[1].astype(int)
+        dry[:,0] = idxnan[0].astype(int)
+        dry[:,1] = idxnan[1].astype(int)
+        xwet = x[wet[:,0], wet[:,1]]
+        ywet = y[wet[:,0], wet[:,1]]
+        xdry = x[dry[:,0], dry[:,1]]
+        ydry = y[dry[:,0], dry[:,1]]
 
-reference = 'pbs_202109_glorys'
-dicts = ut._get_dict_paths('../data/grid_config_esmf.txt')
+        xy = np.array([xdry, ydry])
+        tree = cKDTree(np.c_[xwet, ywet])  # prepare kdtree
+        _,ii = tree.query(xy.T, k=1)       # query at nearest neighbor only
+        if wet.shape[0] == 0: 
+            pass
+        else:
+            # ii-th wet  onto dry points - shape of ii and dry must be the same
+            varz[k, dry[:,0], dry[:,1]] = varx[k, wet[ii,0], wet[ii,1]]
+
+    return varz
+
+
+
+
+
+reference = 'swatl_2022'
+dicts = ut._get_dict_paths('../configs/grid_config_esmf.txt')
 dicts = dicts[reference]
 
 outfile = dicts['output_file']
@@ -122,10 +144,14 @@ nc_ini_src = nc_ini_src.isel(z=zsel)
 # the extrapolation procedure is not generic!!
 for varb in varbs:
     if nc_ini_src[varb].values.ndim == 4:
-        nc_ini_src[varb].values[0] = extrapolation_repensar(nc_ini_src[varb].values[0,])
+        nc_ini_src[varb].values[0] = extrapolation_nearest(nc_ini_src.longitude.values,
+                                                           nc_ini_src.latitude.values,
+                                                           nc_ini_src[varb].values[0,])
         var = interpolation(dicts['grid_dir'], nc_roms_grd, nc_ini_src[varb][0], ds_out)
     elif nc_ini_src[varb].values.ndim == 3:
-        nc_ini_src[varb].values = extrapolation_repensar(nc_ini_src[varb].values)
+        nc_ini_src[varb].values = extrapolation_nearest(nc_ini_src.longitude.values,
+                                                        nc_ini_src.latitude.values,
+                                                        nc_ini_src[varb].values)
         var = interpolation(dicts['grid_dir'], nc_roms_grd, nc_ini_src[varb], ds_out)
     else:
         raise IndexError('array should be either 3D or 4D')
