@@ -90,7 +90,8 @@ variables_list = {
         'accumulation': True,
         'outputName': 'swrad',
         'scale': 1.0/(dt*3600),
-        'units': 'W m-2'
+        'units': 'W m-2',
+        'time': 'srf_time',
     },
     'msnswrf' : {
         'ECMWFlongname': 'mean_surface_net_short_wave_radiation_flux',
@@ -98,7 +99,8 @@ variables_list = {
         'accumulation': True,
         'outputName': 'swrad',
         'scale': 1.0/(dt*3600),
-        'units': 'W m-2'
+        'units': 'W m-2',
+        'time': 'srf_time',
     },
     'metss' : { # wess
         'ECMWFlongname': 'eastward_turbulent_surface_stress',
@@ -106,7 +108,8 @@ variables_list = {
         'accumulation': True,
         'outputName': 'sustr',
         'scale': 1.0/(dt*3600),
-        'units': 'N m-2'
+        'units': 'N m-2',
+        'time': 'sms_time',
     },
     'mntss' : { # nsss
         'ECMWFlongname': 'northward_turbulent_surface_stress',
@@ -114,14 +117,16 @@ variables_list = {
         'accumulation': True,
         'outputName': 'svstr',
         'scale': 1.0/(dt*3600),
-        'units': 'N m-2'
+        'units': 'N m-2',
+        'time': 'sms_time'
     },
     'mtpr' : {
         'ECMWFlongname': 'total_precipitation',
         'Vname': 'rain',
         'accumulation': True,
         'outputName': 'rain',
-        'scale': 1.0/(dt*3600), #1000.0/(dt*3600)
+        'scale': 1.0/(dt*3600), #1000.0/(dt*3600),
+        'time': 'rain_time'
         #'units': 'kg m-2 s-1'
     },
     'mer' : {
@@ -130,6 +135,7 @@ variables_list = {
         'accumulation': True,
         'outputName': 'e',
         'scale': 1.0/(dt*3600), #1000.0/(dt*3600)
+        'time': 'evap_time'
         #'units': 'kg m-2 s-1'
     },
     'sst' : {
@@ -138,7 +144,8 @@ variables_list = {
         'accumulation': False,
         'outputName': 'sst',
         'scale': 1,
-        'units': 'degC'
+        'units': 'degC',
+        'time': 'sst_time',
     },
 
     # variables to be derived from other variables
@@ -148,7 +155,8 @@ variables_list = {
         'accumulation': False,
         'outputName': 'Qair',
         'scale': 1.0,
-        'units': 'percentage'
+        'units': 'percentage',
+        'time': 'qair_time'
     },
     'shflux' : {
         'ECMWFlongname': '',
@@ -156,7 +164,8 @@ variables_list = {
         'accumulation': True,
         'outputName': 'shflux',
         'scale': 1.0/(dt*3600),
-        'units': 'W m-2'
+        'units': 'W m-2',
+        'time': 'shf_time'
     },
     'swflux' : {
         'ECMWFlongname': '',
@@ -164,7 +173,8 @@ variables_list = {
         'accumulation': True,
         'outputName': 'swflux',
         'scale': 1/1000, #-100. / (dt*3600.)*(24*3600), # (Arango's scripts)
-        'units': 'm s-1'
+        'units': 'm s-1',
+        'time': 'swf_time'
     },
     'dQdSST' : {
         'ECMWFlongname': '',
@@ -173,5 +183,6 @@ variables_list = {
         'outputName': 'dQdSST',
         'scale': 1,
         'units': 'W m-2 degC-1'
+        'time': 'sst_time'
     },
 }

@@ -79,5 +79,25 @@
           }   
         },
     },   
-
+'bulk_fluxes':{
+    'atmos.variables'  : {'mean_northward_turbulent_surface_stress',
+                          'mean_eastward_turbulent_surface_stress', 
+                          'mean_surface_net_long_wave_radiation_flux',
+                          'mean_surface_sensible_heat_flux',        
+                          'mean_surface_latent_heat_flux',          
+                          'mean_surface_downward_long_wave_radiation_flux',
+                          'mean_surface_net_short_wave_radiation_flux',
+                          't',          
+                          'mean_evaporation_rate',
+                          'sea_surface_temperature',
+                          'mean_sea_level_pressure',
+                          '10m_u_component_of_wind',
+                          '10m_v_component_of_wind'
+                        },
+    'atmos.extrap'     : 'laplace',
+    'atmos.meanrate'   : True,
+    'atmos.bulkfluxes' : False,
+    'atmos.listfiles'  : '/home/otel/Dropbox/trabalho_irado/2021/postdoc/2021_data/mercator_reanalysis_evaluation/data/era5/202209_nesting_test',
+    'atmos.savedir'    : '/home/otel/Desktop/deletar/pyroms_tools/data',
+  },
 }

@@ -378,7 +378,8 @@ variables_list = {
         'accumulation': True,
         'outputName': 'sustr',
         'scale': 1.0/(dt*3600),
-        'units': 'N m-2'
+        'units': 'N m-2',
+        'time': 'sms_time',
     },
     'mntss' : { # nsss
         'ECMWFlongname': 'northward_turbulent_surface_stress',
@@ -386,7 +387,8 @@ variables_list = {
         'accumulation': True,
         'outputName': 'svstr',
         'scale': 1.0/(dt*3600),
-        'units': 'N m-2'
+        'units': 'N m-2',
+        'time': 'sms_time'
     },
     'mtpr' : {
         'ECMWFlongname': 'total_precipitation',
@@ -394,7 +396,7 @@ variables_list = {
         'accumulation': True,
         'outputName': 'rain',
         'scale': 1.0/(dt*3600), #1000.0/(dt*3600)
-        'time': 'rain_time'
+        'time': 'rain_time',
         #'units': 'kg m-2 s-1'
     },
     'tp' : {
@@ -404,7 +406,8 @@ variables_list = {
         'outputName': 'rain',
         'scale': 1000.0/(dt*3600),
         'time': 'rain_time',
-        'units': 'kg m-2 s-1'
+        'units': 'kg m-2 s-1',
+        'time': 'rain_time'
     },
     'mer' : {
         'ECMWFlongname': 'evaporation',
