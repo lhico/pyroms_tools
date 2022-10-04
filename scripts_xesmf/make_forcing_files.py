@@ -8,8 +8,8 @@ import sys
 import xarray as xr
 from glob import glob
 
-from utils.atmos_forcing import relative_humidity, dQdT, scaling, extrapolating_era5, variables_list
-# from variables_dict_ecmwf import variables_list
+from utils.atmos_forcing import relative_humidity, dQdT, scaling, extrapolating_era5
+from utils.variables_dict_ecmwf import variables_list
 from utils import utils as ut
 
 # -- gets  the information from the config file -- #
