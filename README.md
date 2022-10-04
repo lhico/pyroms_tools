@@ -91,7 +91,7 @@ We don't include the installation of X11 in the Dockerfile, because it depends o
 
 ## 2. Scripts structure
 
-The main scripts are placed at the `scripts` directory as follows:
+The main scripts are placed at the `scripts` and `scripts_xesmf` directory as follows:
 
 ```
 .
@@ -110,7 +110,12 @@ The main scripts are placed at the `scripts` directory as follows:
 │   ├── make_tpxo_remap_weight_file.py
 │   ├── make_tpxo_tide.py
 │   └── README.md
-│   
+└── scripts_xesmf
+    ├── make_forcing_files.py
+    ├── make_ic_file_replace.py
+    ├── nested_adjust_grids_bathymetry.py
+    ├── nested_replace_finegrid_bathy.py
+    └── utils -> ../scripts/utils/  # symlink
 ```
 
 Our scripts are used to prepare the following files:
@@ -119,8 +124,26 @@ Our scripts are used to prepare the following files:
 2. initial conditions
 3. boundary files
 4. tides
+5. nesting adjustments
 
 Notice that these scripts assume the dataset used as a reference for the interpolation is in an Arakawa A-grid (https://en.wikipedia.org/wiki/Arakawa_grids). Their paths are set within the configuration files.
+
+
+The files in `scripts` should be used within a pyroms environments - we provide a docker image with a pyroms environment, since this package may be rather difficult to install.
+
+The files in `scripts_xesmf` require (do not use pyroms docker image):
+- xarray
+- numpy
+- scipy
+- xesmf
+- cartopy
+
+If you are using the nested scripts, please run the following line in `scripts/utis`:
+
+```
+f2py --verbose -c -m extrapolate fill.f90
+```
+
 
 ### **2.1 Grids**
 
@@ -143,7 +166,7 @@ a. create interpolation weights: `make_ic_files_remap_weight_file.py` (pyroms)
 
 b. interpolate the information onto roms grid: `make_ic_file.py` (pyroms)
 
-c. reinterpolate the information onto roms grid: `make_ic_file_replace.py` (xesmf)
+c. reinterpolate the information onto roms grid: `make_ic_file_replace.py` (xesmf)  ! VERY IMPORANT - there are cases where the original pyroms scripts distorts the vertical fields. This approach may help solving this issue.
 
 The third step is necessary in these scripts because the interpolation using pyroms created spurious horizontal TS gradients in idealized cases where the TS fields were  horizontally homogenous. For this reason I rewrote an interpolation script with xesmf that corrected the issue. **Warning: close to the coast I needed to interpolate the information with a nearest-neighbor approach. This approach is NOT general. This quick-fix worked in my case, but it needs further thought.** 
 
@@ -166,7 +189,7 @@ a. create interpolation weights: `make_tpxo_files_remap_weight_file.py` (pyroms)
 b. interpolate the information onto roms grid: `make_tpxo_file.py` (pyroms)
 
 
-**ATTENTION!!!!!**: tpxo files are huge and we don't want to copy them repeatedly. Docker containers don't play well with symbolic links, so the workaround to have tpxo files in the right place is to map the volume directly from your computer onto a container directory. Below is an example of how to do it:
+**ATTENTION!!!!!**: tpxo files are huge and we don't want to copy them repeatedly. Docker containers don't play well with symbolic links, so the workaround to have tpxo files in the right place is to map the volume directly from your computer onto a container directory. Below is an example:
 
 ```
 TPXOPATH=/home/otel/Dropbox/trabalho_irado/2021/postdoc/2021_data/roms_files/tpxo
