@@ -45,7 +45,7 @@ def remap(src_file, src_grd, dst_grd, src_varname, starttime, scalar_dict,
     time = datetime.strptime(starttime,strtime)
     timeNum = date2num(time)
     timeNum = timeNum - ref
-    timeNum = timeNum + 0.5 # 1-day average
+    timeNum = timeNum # + 0.5 # 1-day average
 
     # -- read source netcdf -- #
     cdf = netCDF.Dataset(src_file)
@@ -168,7 +168,7 @@ def remap_uv(src_file, src_grd, dst_grd, starttime,
     time = datetime.strptime(starttime, strtime)
     timeNum = date2num(time)
     timeNum = timeNum - ref
-    timeNum = timeNum + 0.5 # 1-day average
+    timeNum = timeNum #+ 0.5 # 1-day average
 
     # -- read source netcdf -- #
     cdf = netCDF.Dataset(src_file)
