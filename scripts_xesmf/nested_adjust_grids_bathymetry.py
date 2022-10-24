@@ -68,7 +68,8 @@ def adjust_bathymetry_between_grids(ncref, ncchange, corrlen, in_width, fr_width
         corrlen (float): correlation length used to normalize the gaussian function (in degrees)
         in_width (integer): width of the external frame
         fr_width (integer): width of the external frame and a few cells of the receiver dataset
-                            its value should be greater than `in_width`
+                            its value should be greater than `in_width`. This info will be used
+                            in the bathymetry combination
         err (float, optional): Estimate of the normalized error. Defaults to 0.01.
         varb (str, optional): Name of the bathymetry dataarray. Defaults to 'h'.
 
@@ -100,6 +101,7 @@ def adjust_bathymetry_between_grids(ncref, ncchange, corrlen, in_width, fr_width
     interpolated = regridder(ncref)  # interpolating
 
     # -- 3 -- #
+    # the zeroth and final 
     notborder = slice(in_width,-in_width)  # index slice where matrix will be nan
 
     # we are combining the interpolated and original bathymetries of the low resolution 
@@ -107,15 +109,24 @@ def adjust_bathymetry_between_grids(ncref, ncchange, corrlen, in_width, fr_width
     # high resolution will be interior (notborder) points and low resolution will be
     # on the borders
     interpolated[varb].values[notborder,notborder] = ncchange.h[notborder,notborder] # set original values
-    interpolated[varb].values[interpolated[varb].values==5] = np.nan   # erasing values considering depths
+
+    interpolated = updating_masks(interpolated, 0, uv=False)
+
+    interpolated[varb].values[interpolated['mask_rho'].values==0] = np.nan
+    # interpolated[varb].values[interpolated[varb].values==5] = np.nan   # erasing values considering depths
 
     # -- 4 -- #    
     # areas that are not the frame used in the bathymetry adjustment are removed
     interpolated[varb].values[fr_width:-fr_width,fr_width:-fr_width] = np.nan
 
 
-    h = interpolated[varb]
+    h = interpolated[varb].copy()
+    # h[:,:3] = np.nan
+    # h[:3,:] = np.nan
+    # h[:,-3:] = np.nan
+    # h[-3:,:] = np.nan
     isnotnan = ~np.isnan(h)
+    
 
     # -- 5 -- #    
     # we adjust the bathymetry to the combined lowres and highres bathymetry present in the frame
@@ -125,12 +136,13 @@ def adjust_bathymetry_between_grids(ncref, ncchange, corrlen, in_width, fr_width
                      xmcha[isnotnan].ravel(), ymcha[isnotnan].ravel(),
                      corrlen, corrlen, err)
 
+    interpolated = regridder(ncref)  # interpolating
     # -- 6 -- #    
-    h1 = h.copy()
+    h1 = interpolated[varb].copy()
     # h1.values = tp.reshape(xmcha.shape)
     h1.values[isnotnan] = tp
     h1.values[fr_width:-fr_width, fr_width:-fr_width] = ncchange.h[fr_width:-fr_width, fr_width:-fr_width]
-
+    
     if hmax is not None:
         h1.values[h1>hmax] = hmax
 
@@ -189,31 +201,49 @@ def estimate_vertices(ncchange):
     return nc
 
 
-def updating_masks(ncchange, fr_width, hthreshold=5):
-    nc = ncchange.copy()
-    nc.load()
+def updating_masks(ncchange, fr_width=0, hthreshold=5., uv=True):
+    """
+    Updates mask using the bathymetry as a reference.
+    This scripts should be used after the update of bathymetry values
+
+    Args:
+        ncchange (xr.Dataset): ROMS grid
+        fr_width (int): width of the frame where the hthreshold will be applied.
+        hthreshold (float, optional): Depth threshold to set the landmask.
+        uv (bool, optional): apply the update to u and v masks
+
+    Returns:
+        _type_: _description_
+    """    
+    nc = ncchange.copy()  # avoid changes of the original dataset
+    nc.load()             # loading allows to update dataarray .values
+    aux = (nc.h.values > hthreshold).astype(float)  # seamask 
+    nc.mask_rho.values = aux 
     nc.mask_rho.values[fr_width:-fr_width] = nc.h.values[fr_width:-fr_width] > hthreshold
+    # roms uses integer instead of booleans to deal with masks
     nc.mask_rho.values[fr_width:-fr_width] = nc.mask_rho.values[fr_width:-fr_width].astype(int)
-    nc.mask_u.values = nc.mask_rho[:,1:]*nc.mask_rho[:,:-1]
-    nc.mask_v.values = nc.mask_rho[1:,:]*nc.mask_rho[:-1,:]
+    if uv:
+        # updating u and v masks
+        nc.mask_u.values = nc.mask_rho[:,1:]*nc.mask_rho[:,:-1]
+        nc.mask_v.values = nc.mask_rho[1:,:]*nc.mask_rho[:-1,:]
     return nc
 
 # use xesmf_env
-if '__name__' == '__main__':
+if __name__ == '__main__':
 
     masklist = ['h', 'mask_u', 'mask_v']
     lonlist  = ['lon_rho', 'lon_u', 'lon_v']
     latlist  = ['lat_rho', 'lat_u', 'lat_v']
 
-    ncchange = xr.open_dataset('/home/otel/Desktop/teste/pyroms_tools/data/treated/roms_grid_smooth_swatl_2022_nested_corrected_smooth.nc')
-    ncref    = xr.open_dataset('/home/otel/Desktop/teste/pyroms_tools/data/treated/roms_grid_smooth_swatl_2022.nc')
-    nc0      = xr.open_dataset('/home/otel/Desktop/teste/pyroms_tools/data/treated/roms_grid_smooth_swatl_2022.nc')
+    ncchange = xr.open_dataset('/home/otel/Dropbox/trabalho_irado/2022/postdoc/202203_ceresIV/pyroms_tools/data/treated/bacia_santos_nest_smooth.nc')
+    ncref    = xr.open_dataset('/home/otel/Dropbox/trabalho_irado/2022/postdoc/202203_ceresIV/pyroms_tools/data/treated/bacia_santos.nc')
+    nc0      = xr.open_dataset('/home/otel/Dropbox/trabalho_irado/2022/postdoc/202203_ceresIV/pyroms_tools/data/treated/bacia_santos.nc')
 
 
     # we need to combine info of the low res grid and the high res grid.
     # we use information from both grids
 
-    h = adjust_bathymetry_between_grids(ncref, ncchange, 0.25, 5, 20, hmax=2500)
+    h = adjust_bathymetry_between_grids(ncref, ncchange, 0.25, 8, 15, hmax=2500)
 
 
     ncchange = ncchange.rename(lon_rho='lon', lat_rho='lat')
@@ -221,11 +251,11 @@ if '__name__' == '__main__':
     ncchange = ncchange.set_coords(['lon', 'lat'])
     ncref = ncref.set_coords(['lon', 'lat'])
 
-
-
     h.values[np.isnan(h)] = 5
     ncchange['h'].values = h.values
     ncchange['hraw'].values =[h.values]
+
+    # ncchange = updating_masks(ncchange,)
     # ncchange = ncchange.rename(lon='lon_rho', lat='lat_rho')
 
 
@@ -248,13 +278,13 @@ if '__name__' == '__main__':
     # unmatching masks at the borders may cause blow-up
     # we are updating masks only at points within a certain range
     # from the borders second argument in updating_masks
-    ncchange = updating_masks(ncchange, 20)
+    ncchange = updating_masks(ncchange, fr_width=0)
 
-
+    # plot the masks
     fig, ax =plt.subplots(nrows=2, ncols=2, sharex=True, sharey=True)
     ax = ax.ravel()
-    ncref.h.plot.contour(x='lon', y='lat', levels=np.arange(0,2000,50), cmap=plt.cm.jet, extend='both', add_colorbar=False, ax=ax[0])
-    ncchange.h.plot.contour(x='lon_rho', y='lat_rho', levels=np.arange(0,2000,50), cmap=plt.cm.jet, extend='both', add_colorbar=False, ax=ax[0])
+    ncref.h.plot.contour(x='lon', y='lat', levels=np.arange(0,2000,25), cmap=plt.cm.jet, extend='both', add_colorbar=False, ax=ax[0])
+    ncchange.h.plot.contour(x='lon_rho', y='lat_rho', levels=np.arange(0,2000,25), cmap=plt.cm.jet, extend='both', add_colorbar=False, ax=ax[0])
 
 
     ncref.h.plot(x='lon', y='lat', levels=np.arange(0,2000,1), cmap=plt.cm.jet, extend='both', add_colorbar=False, ax=ax[1])
@@ -263,12 +293,9 @@ if '__name__' == '__main__':
 
     ncref.h.plot(x='lon', y='lat', levels=np.arange(-200,200,1), cmap=plt.cm.RdBu_r, extend='both', add_colorbar=False, ax=ax[2])
     ncchange.h.plot(x='lon_rho', y='lat_rho', levels=np.arange(-200,200,1), cmap=plt.cm.RdBu_r, extend='both', add_colorbar=False, ax=ax[2])
+    ncchange.h.plot.contour(x='lon_rho', y='lat_rho', levels=np.arange(0,2000,25), cmap=plt.cm.RdBu_r, extend='both', add_colorbar=False, ax=ax[3])
 
 
-
-    ncchange.h.plot.contour(x='lon_rho', y='lat_rho', levels=np.arange(0,2000,100), cmap=plt.cm.RdBu_r, extend='both', add_colorbar=False, ax=ax[3])
-
-
-    ncchange.to_netcdf('/home/otel/Desktop/teste/pyroms_tools/data/treated/roms_grid_smooth_swatl_2022_nested_corrected_smooth_adjusted.nc')
+    ncchange.to_netcdf('/home/otel/Dropbox/trabalho_irado/2022/postdoc/202203_ceresIV/pyroms_tools/data/treated/bacia_santos_nest_adjusted.nc')
 
 
