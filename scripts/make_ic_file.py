@@ -18,51 +18,31 @@ icgridfile   = dicts['ic.grid_file']
 icfile       = dicts['ic.input_file']
 outdir       = dicts['output_dir']
 romsgridname = dicts['ic.gridname']
-srcgridname  = dicts['ic.srcname']
 interp_varbs  = dicts['ic.interp_varbs']
 interp_varbs2 = dicts['ic.interp_varbs2']
-varstr       = dicts['ic.varstr']
-xrange       = dicts['ic.source_xrange']
-yrange       = dicts['ic.source_yrange']
 scalar_dict  = dicts['scalar_dict']
 starttime    = dicts['ic.starttime']
 
 # area='regional'
 
-# -- the xrange and yrange MUST be the same of make_remap_weights_file.py -- #
-
-# -- files used to write the initial conditions -- #
-
-
-
-wfiles = [
-    f'remap_weights_{srcgridname}_to_{romsgridname}_bilinear_t_to_rho.nc',
-    f'remap_weights_{srcgridname}_to_{romsgridname}_bilinear_t_to_rho.nc',
-    f'remap_weights_{srcgridname}_to_{romsgridname}_bilinear_t_to_rho.nc'
-    ]
-
-
-# -- gets the source and destiny grids --#    nc.to_netcdf('woa_clim_extend.nc')
-src_grd = CGrid_glorys.A2CGrid(icgridfile, xrange=xrange, yrange=yrange, lonoffset=0, **varstr)
+# this line uses pyroms gridid.txt
 dst_grd = pyroms.grid.get_ROMS_grid(romsgridname)
 
-# -- interpolates scalar fields -- #
+# -- creates scalar fields -- #
 for varb in interp_varbs:
     dfile = f'{dst_grd.name}_{varb}_ic.nc'  # temporary interpolated file
-    remap.remap(icfile, src_grd, dst_grd, varb, starttime, scalar_dict,
-                dst_file=dfile,
-                weight_file=wfiles[0])
+    remap.create_scalar_fields_3D(dst_grd, varb, starttime, scalar_dict,
+                dst_file=dfile)
 
-# -- interpolates vector fields -- #
+# -- creates vector fields -- #
 dfileu = f'{dst_grd.name}_u_ic.nc'  # temporary interpolated file name
 dfilev = f'{dst_grd.name}_v_ic.nc'  # temporary interpolated file name
 
 # interpolating
-remap.remap_uv(icfile, src_grd, dst_grd, starttime,
-               dst_fileu=dfileu, dst_filev=dfilev, wts_file=wfiles)
+remap.create_vector_fields(dst_grd, starttime,dst_fileu=dfileu, dst_filev=dfilev)
 
 # name of the merged initial condition file
-ic_file = bdry_file = osp.join(outdir, f'{dst_grd.name}_{srcgridname}_ic.nc')
+ic_file = osp.join(outdir, f'{dst_grd.name}_ic.nc')
 out_file = f'{dst_grd.name}_%s_ic.nc'  # temporary interpolated file
 
 
