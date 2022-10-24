@@ -162,13 +162,9 @@ Everything is linked by the dictionary configuration file `grid_config_pyroms.tx
 
 After creating the grid file, you'll need to interpolate the initial conditions onto it. We have three steps in this case:
     
-a. create interpolation weights: `make_ic_files_remap_weight_file.py` (pyroms)
+a. create empty ic file : `make_ic_file.py` (pyroms)
 
-b. interpolate the information onto roms grid: `make_ic_file.py` (pyroms)
-
-c. reinterpolate the information onto roms grid: `make_ic_file_replace.py` (xesmf)  ! **VERY IMPORANT - there are cases where the original pyroms scripts distorts the vertical fields. This approach may help solving this issue.**
-
-The third step is necessary in these scripts because the interpolation using pyroms created spurious horizontal TS gradients in idealized cases where the TS fields were  horizontally homogenous. For this reason I rewrote an interpolation script with xesmf that corrected the issue.
+b. interpolate the information onto empty ic_file: `make_ic_file_replace.py` (xesmf)
 
 ### **2.3 Boundary files**
 
