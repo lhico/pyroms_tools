@@ -8,6 +8,10 @@ from scipy import ndimage
 import matplotlib.pyplot as plt
 import os.path as osp
 import os
+from pyroms import vgrid
+from pyroms_toolbox import rx1
+
+
 
 def plot(h2, x):
     fig, ax = plt.subplots(ncols=2,nrows=2,figsize=[10,3])
@@ -36,8 +40,45 @@ def plot(h2, x):
         ax[i].set_ylim(0,70)
 
 
+def calculate_rx1(nc,message):
+
+    vgrd = vgrid.s_coordinate_4(nc['h'].values,
+                                nc['theta_b'].values,
+                                nc['theta_s'].values,
+                                nc['Tcline'].values, 
+                                nc['s_rho'].size,
+                                hraw=nc['hraw'].values)
+    z_w = vgrd.z_w.__getitem__(0)
+    rmask = nc.mask_rho.values
+
+    print("# -- Haney number -- #\n")
+    print("""Steep topography may be a problem in ROMS. Haney number (rx1) is used to asses if topography is too
+    steep. 
+    rx1~3 is 'safe and conservative'. Values greater than 8-10 are 'insane' 
+ (https://www.myroms.org/forum/viewtopic.php?f=14&t=612). Be careful to not oversmooth the bathymetry\n""")
+    print(message + '\n')
+
+    rx1values = rx1(z_w,rmask)
+    
+    return rx1values
+
+
+def plot_structure(datasetoriginal, datasetnew, fsize=[15,5], vmin=0, vmax=3000, s=0,vmindiff=-100,vmaxdiff=100):
+    datasetoriginal = datasetoriginal.set_coords(['lon_rho', 'lat_rho'])
+    datasetnew = datasetnew.set_coords(['lon_rho', 'lat_rho'])
+    fig, ax = plt.subplots(nrows=1,ncols=3,figsize=fsize,sharex=True,sharey=True)
+    datasetoriginal['h'].plot(vmin=vmin, vmax=vmax,x='lon_rho', y='lat_rho', ax=ax[0], cmap=plt.cm.jet)
+    datasetnew['h'].plot(vmin=vmin, vmax=vmax,x='lon_rho', y='lat_rho', ax=ax[1], cmap=plt.cm.jet)
+    (datasetoriginal['h']-datasetnew['h']).plot(x='lon_rho', y='lat_rho', ax=ax[2],cmap=plt.cm.RdBu_r, vmin=vmindiff, vmax=vmaxdiff)
+    ax[0].set_title('original', loc='right')
+    ax[1].set_title('smoothed', loc='right')
+    ax[2].set_title('difference', loc='right')
+    plt.tight_layout()
+    fig.savefig('compare_smoothed_bathymetry_%s.png' % s)
+
 if __name__ == '__main__':
     
+    nested_grid = True
     # -- gets  the information from the config file -- #
     reference = 'pbs_202109_glorys'
     dicts = ut._get_dict_paths('../configs/grid_config_pyroms.txt')
@@ -46,11 +87,24 @@ if __name__ == '__main__':
     gdir     = dicts['output_dir']
     capdepth = dicts['smooth.capdepth']
     smooth   = dicts['smooth.smooth'] 
-    nc0 = xr.open_dataset(osp.join(gdir,'grids/bacia_santos00.nc'))
+    nc0 = xr.open_dataset(osp.join(gdir,'roms_grid00.nc'))
+    # nc0 = xr.open_dataset(osp.join(gdir,'bacia_santos_nest_corrected.nc'))
+    
+    # matlab function does not copy some values from original file
+    # to nested file (Matlab R2021b Update 4 (9.11.0.2022996) 64-bit (glnxa64))
+    if nested_grid:
+        ncaux = xr.open_dataset(osp.join(gdir,'bacia_santos.nc')) 
+        nc0.load()
+        for i in ['theta_s', 'theta_b','hc', 'Cs_r', 'Cs_w', 'Tcline']:
+            nc0[i].values = ncaux[i].values
+    
+
     nc = nc0.copy()
 
-    # x,y = np.gradient(nc.h)
-    # z = (x**2+y**2)**0.5
+
+
+    rx1in = calculate_rx1(nc0, '# -- original rx1 values -- #')
+
     h = nc.h.values.copy()
     # smooth = abs(ndimage.gaussian_filter(z/z.max()-1,8))
 
@@ -87,7 +141,17 @@ if __name__ == '__main__':
 
 
     fileout = osp.join(gdir, 'bacia_santos.nc')
+    # fileout = osp.join(gdir, 'bacia_santos_nest_smooth.nc')
     os.system(f'rm {fileout}')
     nc.to_netcdf(fileout)
 
 
+    rx1out = calculate_rx1(nc, '# -- modified rx1 values -- #')
+    plt.figure()
+    plt.hist(rx1out.ravel(),bins=50)
+    plt.yscale('log')
+    plt.savefig('rx1.png')
+
+    print(' \n-- plotting bathymetry comparison-- \n')
+    plot_structure(nc0, nc, fsize=[15,5])
+    plot_structure(nc0, nc, fsize=[15,5], vmin=5.1,vmax=100, s=1)
