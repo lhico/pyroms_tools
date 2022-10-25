@@ -23,7 +23,23 @@ def compute_depth_layers(ds, hmin=0.1):
     
     return z_rho, z_w
 
-def interpolation(fpath, nc_roms_grd, source_grid, target_grid):
+def interpolation(fpath, nc_roms_grd, source_grid, target_grid, gridtype='rho'):
+    target_grid = target_grid.copy()
+
+    coords_rename = {'roms2data':
+                        {
+                            'rho': {'lon_rho':'lon', 'lat_rho':'lat'},
+                            'u'  : {'lon_u':'lon', 'lat_u':'lat'},
+                            'v'  : {'lon_v':'lon', 'lat_v':'lat'},
+                        },
+                     'data2roms':
+                       {
+                            'rho': {'lon':'lon_rho', 'lat':'lat_rho'},
+                            'u'  : {'lon':'lon_u', 'lat':'lat_u'},
+                            'v'  : {'lon':'lon_v', 'lat':'lat_v'},
+                       }
+
+                    }
 
     # TODO fix up the vertical axis
     nc0 = xr.open_dataset(fpath)
@@ -34,11 +50,18 @@ def interpolation(fpath, nc_roms_grd, source_grid, target_grid):
     nc_roms_grd.hc.values = nc0.hc.values
     nc_roms_grd.Cs_w.values = nc0.Cs_w.values
 
+    target_grid = target_grid.rename(coords_rename['roms2data'][gridtype])
 
     # define vertical coordinates
     z,_ = compute_depth_layers(nc_roms_grd) 
     z = z.transpose(*('s_rho','eta_rho','xi_rho'), transpose_coords=False)
     z = z.values
+
+    if gtype == 'u':
+        z = z[:,:,:-1]
+    elif gtype == 'v':
+        z = z[:,:-1,:]
+
 
     #  horizontal interpolation
     regridder = xe.Regridder(source_grid, target_grid, 'bilinear', extrap_method='nearest_s2d')
@@ -46,11 +69,11 @@ def interpolation(fpath, nc_roms_grd, source_grid, target_grid):
 
     interpvarb = np.zeros(z.shape)
 
-    mask = nc_roms_grd.mask_rho.values
+    mask = nc_roms_grd[f'mask_{gridtype}'].values
     ind = np.where(mask!=0)
 
     for j,i in zip(ind[0], ind[1]):
-        print(j,i)
+        print(j,i, end='\r')
         f = interpolate.interp1d(-interpolated.z.values,
                                   interpolated[:,j,i].values,
                                   bounds_error=False,
@@ -110,72 +133,83 @@ def extrapolation_nearest(x,y,var, maskvalue=None):
 
 
 
+if __name__ == '__main__':
 
-reference = 'swatl_2022'
-dicts = ut._get_dict_paths('../configs/grid_config_esmf.txt')
-dicts = dicts[reference]
+    # set this true when testing for horizontal homogenous fields
+    # it will use the average of initial conditions source
+    horizonta_homog_fields = False
 
-outfile = dicts['output_file']
-rename_coords = dicts['rename_dims']
-rename_vars   = dicts['rename_vars']
-varbs = dicts['varbs_rho']
-invert_depth = dicts['invert']
-zdel = dicts['delete_idepths']
+    reference = 'swatl_2022'
+    reference = 'bacia_santos_nested'
+    dicts = ut._get_dict_paths('../configs/grid_config_esmf.txt')
+    dicts = dicts[reference]
 
-# 1) read data
-nc_roms_grd  = xr.open_dataset(dicts['grid_dir'])  # roms grid
-nc_ini_src   = xr.open_dataset(dicts['ic_file'])   # initial conditions sourec
-nc_out0       = xr.open_dataset(dicts['src_file']) # target file (we will replace some of its variables)
-nc_out = nc_out0.copy()
+    outfile = dicts['output_file']        # output file name
+    rename_coords = dicts['rename_dims']  # renaming source file coordinates
+    rename_vars   = dicts['rename_vars']  # renaming sourfe file variables
+    varbs = dicts['varbs_rho']            # which variables will be interpolated
+    invert_depth = dicts['invert']
+    zdel = dicts['delete_idepths']
 
-ds_out = nc_roms_grd.rename({'lon_rho':'lon', 'lat_rho':'lat'})  # rename variables so xesmf understand them
+    # 1) read data
+    nc_roms_grd  = xr.open_dataset(dicts['grid_dir'])  # roms grid
+    nc_ini_src   = xr.open_dataset(dicts['ic_file'])   # initial conditions sourec
+    nc_out0       = xr.open_dataset(dicts['src_file']) # target file (we will replace some of its variables)
+    nc_out = nc_out0.copy()
 
-nc_ini_src = nc_ini_src.rename_dims(rename_coords)
-nc_ini_src = nc_ini_src.rename_vars(rename_vars)
-# nc_ini_src = nc_ini_src.assign_coords(z=nc_ini_src.z)
+    ds_out = nc_roms_grd  #.rename({'lon_rho':'lon', 'lat_rho':'lat'})  # rename variables so xesmf understand them
 
-# attention
-zsel = np.arange(nc_ini_src.z.values.size)
-zsel = np.delete(zsel, zdel)
-nc_ini_src = nc_ini_src.isel(z=zsel)
+    nc_ini_src = nc_ini_src.rename_dims(rename_coords)
+    nc_ini_src = nc_ini_src.rename_vars(rename_vars)
+    # nc_ini_src = nc_ini_src.assign_coords(z=nc_ini_src.z)
 
+    
+    if horizonta_homog_fields:  # setting homogenous horizontal fields
+        nc = nc_ini_src.mean(dim=['lon','lat'])
+        for i in varbs:
+            nc_ini_src[i].values[:] = nc[i].values[:,None,None] 
+        outfile = outfile[:-3] + '_hor_homog.nc'
 
-# 2) linear interpolation from source to roms grid (horizontal) -> roms_aux
-# the extrapolation procedure is not generic!!
-for varb in varbs:
-    if nc_ini_src[varb].values.ndim == 4:
-        nc_ini_src[varb].values[0] = extrapolation_nearest(nc_ini_src.longitude.values,
-                                                           nc_ini_src.latitude.values,
-                                                           nc_ini_src[varb].values[0,])
-        var = interpolation(dicts['grid_dir'], nc_roms_grd, nc_ini_src[varb][0], ds_out)
-    elif nc_ini_src[varb].values.ndim == 3:
-        nc_ini_src[varb].values = extrapolation_nearest(nc_ini_src.longitude.values,
-                                                        nc_ini_src.latitude.values,
-                                                        nc_ini_src[varb].values)
-        var = interpolation(dicts['grid_dir'], nc_roms_grd, nc_ini_src[varb], ds_out)
-    else:
-        raise IndexError('array should be either 3D or 4D')
-    nc_out[varb].values = [var]
-
-nc_out.u.values[:] = 0 
-nc_out.v.values[:] = 0 
-nc_out.ubar.values[:] = 0 
-nc_out.vbar.values[:] = 0 
-
-os.system(f'rm {outfile}')
-nc_out.to_netcdf(outfile)
+    # attention
+    zsel = np.arange(nc_ini_src.z.values.size)
+    zsel = np.delete(zsel, zdel)
+    nc_ini_src = nc_ini_src.isel(z=zsel)
 
 
+    # 2) linear interpolation from source to roms grid (horizontal) -> roms_aux
+    # the extrapolation procedure is not generic!!
+    for varb in varbs:
+
+        print(f'\n# -- Interpolating {varb} --#\n')
+        
+        gtype = 'rho'
+        if varb in ['u']:
+            gtype = 'u'
+        elif varb in ['v']:
+            gtype = 'v' 
+        
+        print(f'grid type: {gtype}')
+        
+        if nc_ini_src[varb].values.ndim == 4:
+            nc_ini_src[varb].values[0] = extrapolation_nearest(nc_ini_src.longitude.values,
+                                                            nc_ini_src.latitude.values,
+                                                            nc_ini_src[varb].values[0,])
+            var = interpolation(dicts['grid_dir'], nc_roms_grd, nc_ini_src[varb][0], ds_out, gridtype=gtype)
+        elif nc_ini_src[varb].values.ndim == 3:
+            nc_ini_src[varb].values = extrapolation_nearest(nc_ini_src.longitude.values,
+                                                            nc_ini_src.latitude.values,
+                                                            nc_ini_src[varb].values)
+            var = interpolation(dicts['grid_dir'], nc_roms_grd, nc_ini_src[varb], ds_out, gridtype=gtype)
+        else:
+            raise IndexError('array should be either 3D or 4D')
+        nc_out[varb].values = [var]
 
 
-# j=184
-# i=88
-# z,_ = compute_depth_layers(nc_out)
-# x, y = z[j,i].lon_rho.values, z[j,i].lat_rho.values
+    nc_out.u.values[:] = 0 
+    nc_out.v.values[:] = 0 
+    nc_out.ubar.values[:] = 0 
+    nc_out.vbar.values[:] = 0 
 
+    os.system(f'rm {outfile}')
+    nc_out.to_netcdf(outfile)
 
-# aux = nc_ini_src.assign_coords(x=nc_ini_src.lon[0,:].values, y= nc_ini_src.lat[:,0].values )
-# aux1 = aux.sel(x=x, y=y, method='nearest')
-
-# plt.plot(nc_out['temp'][0,:,j,i], z[j,i], marker='x')
-# plt.plot(aux1['temp'], -aux1.z, marker='x')
