@@ -140,7 +140,7 @@ if __name__ == '__main__':
     horizonta_homog_fields = False
 
     reference = 'swatl_2022'
-    reference = 'bacia_santos_nested'
+
     dicts = ut._get_dict_paths('../configs/grid_config_esmf.txt')
     dicts = dicts[reference]
 
