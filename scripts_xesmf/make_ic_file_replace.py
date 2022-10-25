@@ -139,7 +139,7 @@ if __name__ == '__main__':
     # it will use the average of initial conditions source
     horizonta_homog_fields = False
 
-    reference = 'swatl_2022'
+    reference = 'pbs_202109_glorys'
 
     dicts = ut._get_dict_paths('../configs/grid_config_esmf.txt')
     dicts = dicts[reference]
