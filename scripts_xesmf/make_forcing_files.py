@@ -1,10 +1,5 @@
 # code based on d_ecmwf2roms.m from Hernan Arango and John Wilkin
-
-# making sure we are in the right folder to load local scripts
-import os
-os.chdir("/home/danilo/phd/thesis/chapter3_driving/scripts/pyroms_tools/scripts")
-
-import sys
+import os, sys
 import xarray as xr
 from glob import glob
 
@@ -19,7 +14,7 @@ if len(sys.argv) > 1:
 else:
     reference = 'bulkfluxes'
 
-dicts = ut._get_dict_paths('../../../config/grid_config_pyroms.txt')[reference]
+dicts = ut._get_dict_paths(f'{os.path.dirname(__file__)}/../../../config/grid_config_pyroms.txt')[reference]
 
 preffix = reference
 mean_rate = dicts['atmos.meanrate']
@@ -72,9 +67,8 @@ sst = xr.open_dataset([f for f in nfiles if 'sea_surface_temperature' in f][0], 
 
 if extrap == 'xesmf':
     print("[LOADING] destiny grid for xESMF interpolation and extrapolation")
-    # destiny grid
-    # TODO: adaptar o caminho para o caminho da grade do projeto, segundo config.yml
-    dst = xr.open_dataset("/home/danilo/phd/thesis/chapter3_driving/projects/swa/input/grid_SWA5km_1200m.nc")
+    # reading destiny grid file [ROMS domain]
+    dst = xr.open_dataset(f"{dicts['output_dir']}/grid_{dicts['ic.gridname']}.nc")
 
     # masking properly to xESMF
     dst['mask'] = dst['mask_rho'].copy()
