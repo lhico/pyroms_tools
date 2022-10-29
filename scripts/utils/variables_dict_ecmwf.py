@@ -182,7 +182,7 @@ variables_list = {
         'accumulation': True,
         'outputName': 'dQdSST',
         'scale': 1,
-        'units': 'W m-2 degC-1'
+        'units': 'W m-2 degC-1',
         'time': 'sst_time'
     },
 }
