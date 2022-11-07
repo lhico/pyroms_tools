@@ -312,7 +312,8 @@ if __name__ == '__main__':
         print(f'{varb} shape: {nc_ini_src[varb].values.ndim}')
         
         if "time" not in nc_ini_src[varb].coords:
-            raise IOError("time should be a coordinate")
+            raise IOError("""time should be a coordinate. If there is a time coordinate with a different
+            name, please rename it to 'time'""")
 
 
         if nc_ini_src[varb].values.ndim == 4:
