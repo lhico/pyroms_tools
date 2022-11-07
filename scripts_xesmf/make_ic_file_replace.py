@@ -208,13 +208,13 @@ def rotate_vector_field(nc):
     source_grid = nc_out.rename({'lon_u': 'lon', 'lat_u':'lat'})
     
     #  horizontal interpolation
-    regridder = xe.Regridder(source_grid, target_grid, 'bilinear', extrap_method='nearest_s2d')
+    regridder = xe.Regridder(source_grid, target_grid, 'bilinear')
     interp_u = regridder(source_grid)  # interpolating
     
     target_grid = nc_out.rename({'lon_rho': 'lon', 'lat_rho':'lat'})
     source_grid = nc_out.rename({'lon_v': 'lon', 'lat_v':'lat'})
     #  horizontal interpolation
-    regridder = xe.Regridder(source_grid, target_grid, 'bilinear', extrap_method='nearest_s2d')
+    regridder = xe.Regridder(source_grid, target_grid, 'bilinear')
     interp_v = regridder(source_grid)  # interpolating
 
     # -- rotate vectors -- #
@@ -234,12 +234,12 @@ def rotate_vector_field(nc):
     # -- regridded and rotated variables are  transformed back to u and v coordinates -- #
     target_grid = nc_out.rename({'lon_u': 'lon', 'lat_u':'lat'})
     source_grid = interp_u
-    regridder = xe.Regridder(source_grid, target_grid, 'bilinear', extrap_method='nearest_s2d')
+    regridder = xe.Regridder(source_grid, target_grid, 'bilinear')
     regrid_u  = regridder(source_grid)
 
     target_grid = nc_out.rename({'lon_v': 'lon', 'lat_v':'lat'})
     source_grid = interp_v
-    regridder = xe.Regridder(source_grid, target_grid, 'bilinear', extrap_method='nearest_s2d')
+    regridder = xe.Regridder(source_grid, target_grid, 'bilinear')
     regrid_v  = regridder(source_grid)
 
     for var in [['u','v'],['ubar','vbar']]:
