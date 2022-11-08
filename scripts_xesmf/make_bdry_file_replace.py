@@ -71,6 +71,7 @@ def interpolation(fpath, nc_roms_grd, source_grid, target_grid, gridtype='rho'):
     interpvarb = np.zeros(z.shape)
 
     mask = nc_roms_grd[f'mask_{gridtype}'].values
+    mask[2:-2,:-2] = 0
     ind = np.where(mask!=0)
 
     for j,i in zip(ind[0], ind[1]):
@@ -277,7 +278,7 @@ if __name__ == '__main__':
     nc_aux0       = xr.open_mfdataset(dicts['src_file'], concat_dim='ocean_time', combine='nested')  # auxilary file (initial condition roms file)
     nc_out0       = xr.open_mfdataset(dicts['bdry.bdry_file'], concat_dim='ocean_time', combine='nested') # target file (boundary condition roms file)
     ncaux         = nc_aux0.copy()
-    outfile       = sorted(glob.glob(dicts['bdry.bdry_file']))
+    outfile       = dicts['bdry.outfile']
 
     nc_ini_src0   = xr.open_mfdataset(dicts['bdry.src_file'], concat_dim='time', combine='nested')  # auxilary file (initial condition roms file)
 
@@ -286,7 +287,7 @@ if __name__ == '__main__':
 
     for i in range(nc_ini_src0.time.size):
         nc_ini_src = nc_ini_src0.isel(time=[i])
-        nc_out1    = nc_out0.isel(ocean_time=[i])
+        nc_out1    = nc_out0.copy()
         nc_ini_src.load()
 
         nc_ini_src = nc_ini_src.rename_dims(rename_coords)
@@ -294,7 +295,7 @@ if __name__ == '__main__':
         print(nc_ini_src.time.values)
         # nc_ini_src = nc_ini_src.assign_coords(z=nc_ini_src.z)
         
-        if horizonta_homog_fields:  # setting homogenous horizontal fields
+        if horizonta_homog_fields:  # se    tting homogenous horizontal fields
             nc = nc_ini_src.mean(dim=['lon','lat'])
             for i in varbs:
                 nc_ini_src[i].values[:] = nc[i].values[:,None,None] 
@@ -367,7 +368,8 @@ if __name__ == '__main__':
             nc_out1[f'{varb}_south'].values = nc_aux1[varb].values[:,0,:]
             nc_out1[f'{varb}_west'].values = nc_aux1[varb].values[:,:,0]
             nc_out1[f'{varb}_east'].values = nc_aux1[varb].values[:,:,-1]
+        
+        nc_out1.assign_coords(ocean_time=nc_ini_src.time.values)
+        nc_out1.to_netcdf(outfile % (str(nc_ini_src.time.values[0])[:19]))
 
-        os.system(f'rm {outfile[i]}')
-        nc_out1.to_netcdf(outfile[i])
 
