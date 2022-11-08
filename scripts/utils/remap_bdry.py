@@ -706,7 +706,7 @@ def z2roms(varz, grdz, grd, Cpos='rho', irange=None, jrange=None, \
     return var
 
 
-def remap_bdry2(src_file, src_grd, dst_grd, src_varname, starttime,
+def make_bdry_rho_file(src_file, src_grd, dst_grd, src_varname, starttime,
                dst_file='', weight_file='', dmax=0,
                cdepth=0, kk=0, strtime='%Y-%m-%dT%H:%M:%S', ndim=3):
 
@@ -883,7 +883,7 @@ def remap_bdry2(src_file, src_grd, dst_grd, src_varname, starttime,
 
 
 
-def remap_bdry_uv2(src_file, src_grd, dst_grd, starttime,
+def make_bdry_uv_file(src_file, src_grd, dst_grd, starttime,
                   dst_fileu='', dst_filev='',
                   srcu='uo', srcv='vo',
                   strtime='%Y-%m-%dT%H:%M:%S',

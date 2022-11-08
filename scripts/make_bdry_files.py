@@ -10,7 +10,7 @@ from utils import utils as ut
 os.environ["PYROMS_GRIDID_FILE"] = "/home/lhico/pyroms_tools/configs/gridid.txt"
 
 # plt.close('all')
-reference = 'pbs_202109_glorys'
+reference = 'swatl_2022'
 dicts = ut._get_dict_paths('../configs/grid_config_pyroms.txt')
 dicts = dicts[reference]
 
@@ -55,14 +55,14 @@ for it, tfile in zip(timerange, file):
     dfilev = f'{dst_grd.name}_v_bdry.nc'  # temporary interpolated file name
 
     # interpolating
-    remap_bdry.remap_bdry_uv(tfile, src_grd, dst_grd, itstr,
+    remap_bdry.make_bdry_uv_file(tfile, src_grd, dst_grd, itstr,
                    dst_fileu=dfileu, dst_filev=dfilev, wts_file=wfiles)
 
 
     # -- interpolates scalar fields -- #
     for varb in ['so', 'thetao','zos']:
         dfile = f'{dst_grd.name}_{varb}_bdry.nc'  # temporary interpolated file
-        remap_bdry.remap_bdry(tfile, src_grd, dst_grd, varb, itstr,
+        remap_bdry.make_bdry_rho_file(tfile, src_grd, dst_grd, varb, itstr,
                               dst_file=dfile, weight_file=wfiles[0])
 
 
