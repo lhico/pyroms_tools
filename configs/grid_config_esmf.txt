@@ -2,6 +2,7 @@
 'swatl_2022': {
     'grid_dir': '/haxome/otel/Dropbox/trabalho_irado/2021/postdoc/202101_caracterizacao_ambiental_PCSE/roms_tools_projetoBS/data/roms_files/pBS_climatology/202108_pBS_ideal_clim_20lev/bacia_santos.nc',
     'ic_file': '/home/otel/Dropbox/trabalho_irado/2021/postdoc/2021_data/roms_files/pBS/202108_grid5km',
+    'bdry_file': '/home/otel/Dropbox/trabalho_irado/2021/postdoc/2021_data/roms_files/pBS/202108_grid5km/pBS_bdry_gambiarra.nc',
     'src_file': '/home/otel/Dropbox/trabalho_irado/2021/postdoc/202101_caracterizacao_ambiental_PCSE/roms_tools_projetoBS/data/roms_files/pBS_climatology/202108_pBS_ideal_clim_20lev/pBS_ic_gambiarra.nc',
     'output_file': '/home/otel/Dropbox/trabalho_irado/2021/postdoc/202101_caracterizacao_ambiental_PCSE/roms_tools_projetoBS/data/roms_files/pBS_climatology/202108_pBS_ideal_clim_20lev/pBS_ic_gambiarra1.nc',
     'replace_uv': True,
