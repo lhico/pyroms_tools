@@ -8,6 +8,7 @@ from scipy import interpolate
 from utils import utils as ut
 import os
 from scipy.spatial import cKDTree
+import glob
 
 
 def compute_depth_layers(ds, hmin=0.1):
@@ -269,97 +270,104 @@ if __name__ == '__main__':
     varbs = dicts['varbs_rho']            # which variables will be interpolated
     invert_depth = dicts['invert']
     zdel = dicts['delete_idepths']
-    outfile = dicts['bdry_file']
+    
 
     # 1) read data
-    nc_roms_grd  = xr.open_dataset(dicts['grid_dir'])   # roms grid
-    nc_aux0       = xr.open_dataset(dicts['src_file'])  # auxilary file (initial condition roms file)
-    nc_out0       = xr.open_dataset(dicts['bdry_file']) # target file (boundary condition roms file)
-    ncaux = nc_aux0.copy()
+    nc_roms_grd   = xr.open_dataset(dicts['grid_dir'])   # roms grid
+    nc_aux0       = xr.open_mfdataset(dicts['src_file'], concat_dim='ocean_time', combine='nested')  # auxilary file (initial condition roms file)
+    nc_out0       = xr.open_mfdataset(dicts['bdry.bdry_file'], concat_dim='ocean_time', combine='nested') # target file (boundary condition roms file)
+    ncaux         = nc_aux0.copy()
+    outfile       = sorted(glob.glob(dicts['bdry.bdry_file']))
 
-    nc_ini_src   = xr.open_dataset(dicts['ic_file'])    # data source (glorys, for instance)
-    
+    nc_ini_src0   = xr.open_mfdataset(dicts['bdry.src_file'], concat_dim='time', combine='nested')  # auxilary file (initial condition roms file)
+
     dsaux = nc_roms_grd  #.rename({'lon_rho':'lon', 'lat_rho':'lat'})  # rename variables so xesmf understand them
 
-    nc_ini_src = nc_ini_src.rename_dims(rename_coords)
-    nc_ini_src = nc_ini_src.rename_vars(rename_vars)
-    print(nc_ini_src.time.values)
-    # nc_ini_src = nc_ini_src.assign_coords(z=nc_ini_src.z)
-    
-    if horizonta_homog_fields:  # setting homogenous horizontal fields
-        nc = nc_ini_src.mean(dim=['lon','lat'])
-        for i in varbs:
-            nc_ini_src[i].values[:] = nc[i].values[:,None,None] 
-        outfile = outfile[:-3] + '_hor_homog.nc'
 
-    # attention
-    zsel = np.arange(nc_ini_src.z.values.size)
-    zsel = np.delete(zsel, zdel)
-    nc_ini_src = nc_ini_src.isel(z=zsel)
+    for i in range(nc_ini_src0.time.size):
+        nc_ini_src = nc_ini_src0.isel(time=[i])
+        nc_out1    = nc_out0.isel(ocean_time=[i])
+        nc_ini_src.load()
 
-    # 2) linear interpolation from source to roms grid (horizontal) -> roms_aux
-    # salinity and temperature must have 4 dimension (time, depth, lat,)
-    for varb in varbs:
-
-        print(f'\n# -- Interpolating {varb} --#\n')
+        nc_ini_src = nc_ini_src.rename_dims(rename_coords)
+        nc_ini_src = nc_ini_src.rename_vars(rename_vars)
+        print(nc_ini_src.time.values)
+        # nc_ini_src = nc_ini_src.assign_coords(z=nc_ini_src.z)
         
-        gtype = 'rho'
-        if varb in ['u']:
-            gtype = 'u'
-        elif varb in ['v']:
-            gtype = 'v' 
-        
-        print(f'grid type: {gtype}')
-        print(f'{varb} shape: {nc_ini_src[varb].values.ndim}')
-        
-        if "time" not in nc_ini_src[varb].coords:
-            raise IOError("time should be a coordinate")
+        if horizonta_homog_fields:  # setting homogenous horizontal fields
+            nc = nc_ini_src.mean(dim=['lon','lat'])
+            for i in varbs:
+                nc_ini_src[i].values[:] = nc[i].values[:,None,None] 
+            outfile = outfile[:-3] + '_hor_homog.nc'
+
+        # attention
+        zsel = np.arange(nc_ini_src.z.values.size)
+        zsel = np.delete(zsel, zdel)
+        nc_ini_src = nc_ini_src.isel(z=zsel)
+
+        # 2) linear interpolation from source to roms grid (horizontal) -> roms_aux
+        # salinity and temperature must have 4 dimension (time, depth, lat,)
+        for varb in varbs:
+
+            print(f'\n# -- Interpolating {varb} --#\n')
+            
+            gtype = 'rho'
+            if varb in ['u']:
+                gtype = 'u'
+            elif varb in ['v']:
+                gtype = 'v' 
+            
+            print(f'grid type: {gtype}')
+            print(f'{varb} shape: {nc_ini_src[varb].values.ndim}')
+            
+            if "time" not in nc_ini_src[varb].coords:
+                raise IOError("time should be a coordinate")
 
 
-        if nc_ini_src[varb].values.ndim == 4:
-            nc_ini_src[varb].values[0] = extrapolation_nearest(nc_ini_src.longitude.values,
-                                                            nc_ini_src.latitude.values,
-                                                            nc_ini_src[varb].values[0,])
-            var = interpolation(dicts['grid_dir'], nc_roms_grd, nc_ini_src[varb][0], dsaux, gridtype=gtype)
+            if nc_ini_src[varb].values.ndim == 4:
+                nc_ini_src[varb].values[0] = extrapolation_nearest(nc_ini_src.longitude.values,
+                                                                nc_ini_src.latitude.values,
+                                                                nc_ini_src[varb].values[0,])
+                var = interpolation(dicts['grid_dir'], nc_roms_grd, nc_ini_src[varb][0], dsaux, gridtype=gtype)
+                ncaux[varb].values = [var]
+            elif nc_ini_src[varb].values.ndim == 3:
+                shp = nc_ini_src[varb].values.shape
+                nc_ini_src[varb].values = extrapolation_nearest(nc_ini_src.longitude.values,
+                                                                nc_ini_src.latitude.values,
+                                                                nc_ini_src[varb].values)
+                var = interpolation2d(dicts['grid_dir'], nc_roms_grd, nc_ini_src[varb], dsaux, gridtype=gtype)
+                var = var.squeeze()
+            else:
+                raise IndexError('array should be either 3D or 4D')
+            ncaux[varb].values = [var]
 
-        elif nc_ini_src[varb].values.ndim == 3:
-            shp = nc_ini_src[varb].values.shape
-            nc_ini_src[varb].values = extrapolation_nearest(nc_ini_src.longitude.values,
-                                                            nc_ini_src.latitude.values,
-                                                            nc_ini_src[varb].values)
-            var = interpolation2d(dicts['grid_dir'], nc_roms_grd, nc_ini_src[varb], dsaux, gridtype=gtype)
-            var = var.squeeze()
-        else:
-            raise IndexError('array should be either 3D or 4D')
-        ncaux[varb].values = [var]
+        nc_aux1 = rotate_vector_field(ncaux)
 
-    nc_aux1 = rotate_vector_field(ncaux)
+        # this part must be improved (I'm not sure if this is the best way to calculate the integrated vertical vaelus)
+        nc_aux1.ubar.values[:] = ((nc_aux1.u * nc_aux1.s_rho).sum(dim='s_rho') / nc_aux1.s_rho.sum()).values
+        nc_aux1.vbar.values[:] = ((nc_aux1.v * nc_aux1.s_rho).sum(dim='s_rho') / nc_aux1.s_rho.sum()).values
 
-    # this part must be improved (I'm not sure if this is the best way to calculate the integrated vertical vaelus)
-    nc_aux1.ubar.values[:] = ((nc_aux1.u * nc_aux1.s_rho).sum(dim='s_rho') / nc_aux1.s_rho.sum()).values
-    nc_aux1.vbar.values[:] = ((nc_aux1.v * nc_aux1.s_rho).sum(dim='s_rho') / nc_aux1.s_rho.sum()).values
+        # copying boundary values from aux to the boundary file
+        # (notice that 'north', 'south', 'west', 'east' refere
+        # actually to top, bottom, left and right directions in the matrix)
+        for varb in varbs:
+            if nc_aux1[varb].ndim == 4:
+                nc_out1[f'{varb}_north'].values = nc_aux1[varb].values[:,:,-1,:]
+                nc_out1[f'{varb}_south'].values = nc_aux1[varb].values[:,:,0,:]
+                nc_out1[f'{varb}_west'].values = nc_aux1[varb].values[:,:,:,0]
+                nc_out1[f'{varb}_east'].values = nc_aux1[varb].values[:,:,:,-1]
+            elif nc_aux1[varb].ndim == 3:
+                nc_out1[f'{varb}_north'].values = nc_aux1[varb].values[:,-1,:]
+                nc_out1[f'{varb}_south'].values = nc_aux1[varb].values[:,0,:]
+                nc_out1[f'{varb}_west'].values = nc_aux1[varb].values[:,:,0]
+                nc_out1[f'{varb}_east'].values = nc_aux1[varb].values[:,:,-1]
 
-    # copying boundary values from aux to the boundary file
-    # (notice that 'north', 'south', 'west', 'east' refere
-    # actually to top, bottom, left and right directions in the matrix)
-    for varb in varbs:
-        if nc_aux1[varb].ndim == 4:
-            nc_out0[f'{varb}_north'].values = nc_aux1[varb].values[:,:,-1,:]
-            nc_out0[f'{varb}_south'].values = nc_aux1[varb].values[:,:,0,:]
-            nc_out0[f'{varb}_west'].values = nc_aux1[varb].values[:,:,:,0]
-            nc_out0[f'{varb}_east'].values = nc_aux1[varb].values[:,:,:,-1]
-        elif nc_aux1[varb].ndim == 3:
-            nc_out0[f'{varb}_north'].values = nc_aux1[varb].values[:,-1,:]
-            nc_out0[f'{varb}_south'].values = nc_aux1[varb].values[:,0,:]
-            nc_out0[f'{varb}_west'].values = nc_aux1[varb].values[:,:,0]
-            nc_out0[f'{varb}_east'].values = nc_aux1[varb].values[:,:,-1]
+        for varb in ['ubar', 'vbar']:
+            nc_out1[f'{varb}_north'].values = nc_aux1[varb].values[:,-1,:]
+            nc_out1[f'{varb}_south'].values = nc_aux1[varb].values[:,0,:]
+            nc_out1[f'{varb}_west'].values = nc_aux1[varb].values[:,:,0]
+            nc_out1[f'{varb}_east'].values = nc_aux1[varb].values[:,:,-1]
 
-    for varb in ['ubar', 'vbar']:
-        nc_out0[f'{varb}_north'].values = nc_aux1[varb].values[:,-1,:]
-        nc_out0[f'{varb}_south'].values = nc_aux1[varb].values[:,0,:]
-        nc_out0[f'{varb}_west'].values = nc_aux1[varb].values[:,:,0]
-        nc_out0[f'{varb}_east'].values = nc_aux1[varb].values[:,:,-1]
-
-    os.system(f'rm {outfile}')
-    nc_out0.to_netcdf(outfile)
+        os.system(f'rm {outfile[i]}')
+        nc_out1.to_netcdf(outfile[i])
 
