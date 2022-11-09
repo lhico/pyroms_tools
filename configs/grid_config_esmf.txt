@@ -6,6 +6,7 @@
     'bdry.src_file': '/home/otel/Dropbox/trabalho_irado/2022/postdoc/202203_ceresIV/pyroms_tools/data/raw/2022_swatl_2010*.nc',
     'bdry.bdry_file': '/home/otel/Dropbox/trabalho_irado/2022/postdoc/202203_ceresIV/pyroms_tools/data/treated/swatl_2022_bdry_2019-08-05T12:00:00.nc',
     'bdry.outfile': '/home/otel/Dropbox/trabalho_irado/2022/postdoc/202203_ceresIV/pyroms_tools/data/treated/swatl_2022_bdry_%s.nc',
+    'bdry.dxdy': 0.083',
     'output_file': '/home/otel/Dropbox/trabalho_irado/2021/postdoc/202101_caracterizacao_ambiental_PCSE/roms_tools_projetoBS/data/roms_files/pBS_climatology/202108_pBS_ideal_clim_20lev/pBS_ic_gambiarra1.nc',
     'replace_uv': True,
     'rename_dims': {},

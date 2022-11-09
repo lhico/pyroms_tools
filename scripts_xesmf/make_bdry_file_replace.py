@@ -9,6 +9,7 @@ from utils import utils as ut
 import os
 from scipy.spatial import cKDTree
 import glob
+import skfmm
 
 
 def compute_depth_layers(ds, hmin=0.1):
@@ -139,7 +140,7 @@ def interpolation2d(fpath, nc_roms_grd, source_grid, target_grid, gridtype='rho'
     #     interpvarb[:,j,i] = f(z[::,j,i])
     return interpvarb
 
-def extrapolation_nearest(x,y,var, maskvalue=None):
+def extrapolation_nearest(x,y,var, dx, maskvalue=None):
     "nearest-neighbor extrapolation with cKDTree method"
     
     varx = var.copy()
@@ -159,9 +160,25 @@ def extrapolation_nearest(x,y,var, maskvalue=None):
         # we will look for poinst with data and extrapolate their value
         # to nearest neighbors with no data
 
+
+        # use fast marching method to avoid nearest interpolation
+        # onto all nans.
+        # fasting marching method 'propagates' a boundary values
+        # in space. It 'spreads' the boundary. So we use this property
+        # to avoid interpolating nearest neighbor values onto
+        # all grid points with nan
+        mask = np.isnan(varx[k])
+        try:
+            dd = skfmm.distance(mask.astype(float), dx=dx)
+            dd[dd>2] = np.nan
+        except:
+            dd = np.zeros(mask.shape)*np.nan
+
+
         print(f'nearest extrapolation: {k/n*100:0.2f}%', end='\r')
-        idxnan = np.where(np.isnan(varx[k]))  # point with no data
+        idxnan = np.where(np.isnan(varx[k]) & ~np.isnan(dd))  # point with no data
         idx    = np.where(~np.isnan(varx[k])) # point with data
+
 
         # set up arrays to be used in CKDTree
         wet = np.zeros((len(idx[0]),2)).astype(int)
@@ -271,7 +288,11 @@ if __name__ == '__main__':
     varbs = dicts['varbs_rho']            # which variables will be interpolated
     invert_depth = dicts['invert']
     zdel = dicts['delete_idepths']
-    
+    # average grid spacing in degrees this is used in the fast marching method
+    # within extrapolation_nearest method
+
+    # if you boundaries are presenting null values at ocean points this is value could be the culprit
+    dx   = dicts['bdry.dxdy']  
 
     # 1) read data
     nc_roms_grd   = xr.open_dataset(dicts['grid_dir'])   # roms grid
@@ -328,14 +349,16 @@ if __name__ == '__main__':
             if nc_ini_src[varb].values.ndim == 4:
                 nc_ini_src[varb].values[0] = extrapolation_nearest(nc_ini_src.longitude.values,
                                                                 nc_ini_src.latitude.values,
-                                                                nc_ini_src[varb].values[0,])
+                                                                nc_ini_src[varb].values[0,],
+                                                                dx)
                 var = interpolation(dicts['grid_dir'], nc_roms_grd, nc_ini_src[varb][0], dsaux, gridtype=gtype)
                 ncaux[varb].values = [var]
             elif nc_ini_src[varb].values.ndim == 3:
                 shp = nc_ini_src[varb].values.shape
                 nc_ini_src[varb].values = extrapolation_nearest(nc_ini_src.longitude.values,
                                                                 nc_ini_src.latitude.values,
-                                                                nc_ini_src[varb].values)
+                                                                nc_ini_src[varb].values,
+                                                                dx)
                 var = interpolation2d(dicts['grid_dir'], nc_roms_grd, nc_ini_src[varb], dsaux, gridtype=gtype)
                 var = var.squeeze()
             else:
