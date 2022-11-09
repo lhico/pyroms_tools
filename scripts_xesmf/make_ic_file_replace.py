@@ -263,7 +263,7 @@ if __name__ == '__main__':
     dicts = ut._get_dict_paths('../configs/grid_config_esmf.txt')
     dicts = dicts[reference]
 
-    outfile = dicts['output_file']        # output file name
+    outfile = dicts['ic.output_file']        # output file name
     rename_coords = dicts['rename_dims']  # renaming source file coordinates
     rename_vars   = dicts['rename_vars']  # renaming sourfe file variables
     varbs = dicts['varbs_rho']            # which variables will be interpolated
@@ -272,8 +272,8 @@ if __name__ == '__main__':
 
     # 1) read data
     nc_roms_grd  = xr.open_dataset(dicts['grid_dir'])  # roms grid
-    nc_ini_src   = xr.open_dataset(dicts['ic_file'])   # initial conditions sourec
-    nc_out0       = xr.open_dataset(dicts['src_file']) # target file (we will replace some of its variables)
+    nc_ini_src   = xr.open_dataset(dicts['ic.source_file'])   # initial conditions sourec
+    nc_out0       = xr.open_dataset(dicts['ic.ic_file']) # target file (we will replace some of its variables)
     nc_out = nc_out0.copy()
 
     ds_out = nc_roms_grd  #.rename({'lon_rho':'lon', 'lat_rho':'lat'})  # rename variables so xesmf understand them

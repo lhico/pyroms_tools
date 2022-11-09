@@ -1,15 +1,13 @@
 from typing import IO
-import matplotlib.pyplot as plt
-import cartopy.crs as ccrs
 import numpy as np
 import xarray as xr
 import xesmf as xe
 from scipy import interpolate
 from utils import utils as ut
-import os
 from scipy.spatial import cKDTree
 import glob
 import skfmm
+
 
 
 def compute_depth_layers(ds, hmin=0.1):
@@ -282,34 +280,52 @@ if __name__ == '__main__':
     dicts = ut._get_dict_paths('../configs/grid_config_esmf.txt')
     dicts = dicts[reference]
 
-    # outfile = dicts['output_file']        # output file name
+    # outfile = dicts['ic.output_file']        # output file name
     rename_coords = dicts['rename_dims']  # renaming source file coordinates
     rename_vars   = dicts['rename_vars']  # renaming sourfe file variables
-    varbs = dicts['varbs_rho']            # which variables will be interpolated
-    invert_depth = dicts['invert']
-    zdel = dicts['delete_idepths']
-    # average grid spacing in degrees this is used in the fast marching method
-    # within extrapolation_nearest method
+    varbs         = dicts['varbs_rho']            # which variables will be interpolated
+    invert_depth  = dicts['invert']
+    zdel          = dicts['delete_idepths']
 
-    # if you boundaries are presenting null values at ocean points this is value could be the culprit
-    dx   = dicts['bdry.dxdy']  
+
+
+    
+    # average grid spacing in degrees. this is used in the fast marching method
+    # within extrapolation_nearest method if you boundaries are presenting null
+    # values at ocean points this is value could be the culprit
+    dx            = dicts['bdry.dxdy']  
+
+    path_grid   = dicts['grid_dir']
+    path_icfile = dicts['ic.ic_file']
 
     # 1) read data
-    nc_roms_grd   = xr.open_dataset(dicts['grid_dir'])   # roms grid
-    nc_aux0       = xr.open_mfdataset(dicts['src_file'], concat_dim='ocean_time', combine='nested')  # auxilary file (initial condition roms file)
-    nc_out0       = xr.open_mfdataset(dicts['bdry.bdry_file'], concat_dim='ocean_time', combine='nested') # target file (boundary condition roms file)
+    nc_roms_grd   = xr.open_dataset(path_grid)   # roms grid
+
+    # auxilary file (initial condition roms file) this file is used as dummy file, onto which
+    # the data is interpolated. It's boundaries values are the boundary files. Its matrix's
+    # don't need to be filled at first, only the shape is necessary
+    nc_aux0       = xr.open_mfdataset(path_icfile,
+                                      concat_dim='ocean_time',
+                                      combine='nested') 
+    
+    # target file (boundary condition roms file)
+    nc_out0       = xr.open_mfdataset(dicts['bdry.bdry_file'],
+                                      concat_dim='ocean_time',
+                                      combine='nested')
     ncaux         = nc_aux0.copy()
     outfile       = dicts['bdry.outfile']
 
-    nc_ini_src0   = xr.open_mfdataset(dicts['bdry.src_file'], concat_dim='time', combine='nested')  # auxilary file (initial condition roms file)
+    # auxilary file (initial condition roms file)
+    nc_ini_src0   = xr.open_mfdataset(dicts['bdry.src_file'],
+                                      concat_dim='time',
+                                      combine='nested')
 
-    dsaux = nc_roms_grd  #.rename({'lon_rho':'lon', 'lat_rho':'lat'})  # rename variables so xesmf understand them
+    dsaux = nc_roms_grd  # remanent of older versions
 
-
+    # loop over time
     for i in range(nc_ini_src0.time.size):
         nc_ini_src = nc_ini_src0.isel(time=[i])
 
-        # check if file was already created (in case it was, the loop starts a new iteration)
         if glob.glob(outfile % (str(nc_ini_src.time.values[0])[:19])):
             print(f'{outfile % (str(nc_ini_src.time.values[0])[:19])} already saved')
             continue
@@ -397,6 +413,7 @@ if __name__ == '__main__':
             nc_out1[f'{varb}_south'].values = nc_aux1[varb].values[:,0,:]
             nc_out1[f'{varb}_west'].values = nc_aux1[varb].values[:,:,0]
             nc_out1[f'{varb}_east'].values = nc_aux1[varb].values[:,:,-1]
+
         
         nc_out1.assign_coords(ocean_time=nc_ini_src.time.values)
         nc_out1.to_netcdf(outfile % (str(nc_ini_src.time.values[0])[:19]))
