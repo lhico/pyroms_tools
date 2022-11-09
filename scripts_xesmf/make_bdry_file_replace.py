@@ -308,6 +308,12 @@ if __name__ == '__main__':
 
     for i in range(nc_ini_src0.time.size):
         nc_ini_src = nc_ini_src0.isel(time=[i])
+
+        # check if file was already created (in case it was, the loop starts a new iteration)
+        if glob.glob(outfile % (str(nc_ini_src.time.values[0])[:19])):
+            print(f'{outfile % (str(nc_ini_src.time.values[0])[:19])} already saved')
+            continue
+
         nc_out1    = nc_out0.copy()
         nc_ini_src.load()
 
