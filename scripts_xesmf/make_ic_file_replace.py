@@ -254,7 +254,7 @@ if __name__ == '__main__':
 
     # set this true when testing for horizontal homogenous fields
     # it will use the average of initial conditions source
-    horizonta_homog_fields = False
+    horizonta_homog_fields = True
 
     reference = 'pbs_202109_glorys'
   
@@ -287,7 +287,17 @@ if __name__ == '__main__':
     if horizonta_homog_fields:  # setting homogenous horizontal fields
         nc = nc_ini_src.mean(dim=['lon','lat'])
         for i in varbs:
-            nc_ini_src[i].values[:] = nc[i].values[:,None,None] 
+            print(i)
+            if nc_ini_src[i].ndim == 3:
+                if i in ['salt', 'temp']:
+                    raise IOError(f'{i} should be 4D')
+                nc_ini_src[i].values[:] = 0
+            elif nc_ini_src[i].ndim == 4:
+                nc_ini_src[i].values[0,:] = nc[i].values[0,:,None,None]
+            nc_ini_src['u'].values[:] = 0
+            nc_ini_src['v'].values[:] = 0
+            nc_ini_src['zeta'].values[:] = 0
+
         outfile = outfile[:-3] + '_hor_homog.nc'
 
     # attention
