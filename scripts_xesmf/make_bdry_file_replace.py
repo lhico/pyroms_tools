@@ -415,7 +415,7 @@ if __name__ == '__main__':
             nc_out1[f'{varb}_east'].values = nc_aux1[varb].values[:,:,-1]
 
         
-        nc_out1.assign_coords(ocean_time=nc_ini_src.time.values)
+        nc_out1 = nc_out1.assign_coords(ocean_time=nc_ini_src.time.values)
         nc_out1.to_netcdf(outfile % (str(nc_ini_src.time.values[0])[:19]))
 
 
