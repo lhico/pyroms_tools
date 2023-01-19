@@ -1,16 +1,20 @@
 import pyroms
-from utils import CGrid_glorys
 from utils import remap
 from utils import utils as ut
 # from utils import configs
 import subprocess
-import os
+import os, sys
 import os.path as osp
-import os
+
 os.environ["PYROMS_GRIDID_FILE"] = "/home/lhico/pyroms_tools/configs/gridid.txt"
 
 # -- gets  the information from the config file -- #
-reference = 'pbs_202109_glorys'
+# getting the referemce domain from shell 
+if len(sys.argv) > 1:
+    reference = sys.argv[1]
+else:
+    reference = 'pbs_202109_glorys'
+
 dicts = ut._get_dict_paths('../configs/grid_config_pyroms.txt')
 dicts = dicts[reference]
 
@@ -42,7 +46,7 @@ dfilev = f'{dst_grd.name}_v_ic.nc'  # temporary interpolated file name
 remap.create_vector_fields(dst_grd, starttime,dst_fileu=dfileu, dst_filev=dfilev)
 
 # name of the merged initial condition file
-ic_file = osp.join(outdir, f'{dst_grd.name}_ic.nc')
+ic_file = osp.join(outdir, f'{dst_grd.name}_ic_empty.nc')
 out_file = f'{dst_grd.name}_%s_ic.nc'  # temporary interpolated file
 
 

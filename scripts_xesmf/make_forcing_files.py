@@ -12,7 +12,7 @@ from utils import utils as ut
 if len(sys.argv) > 1:
     reference = sys.argv[1]
 else:
-    reference = 'bulkfluxes'
+    reference = 'pbs_202109_glorys'
 
 dicts = ut._get_dict_paths(f'{os.path.dirname(__file__)}/../../../config/grid_config_pyroms.txt')[reference]
 

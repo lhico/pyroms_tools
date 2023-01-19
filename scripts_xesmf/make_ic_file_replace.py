@@ -6,7 +6,7 @@ import xarray as xr
 import xesmf as xe
 from scipy import interpolate
 from utils import utils as ut
-import os
+import os, sys
 from scipy.spatial import cKDTree
 
 
@@ -256,9 +256,12 @@ if __name__ == '__main__':
     # it will use the average of initial conditions source
     horizonta_homog_fields = True
 
-    reference = 'pbs_202109_glorys'
-  
-
+    # -- gets  the information from the config file -- #
+    # getting the referemce domain from shell 
+    if len(sys.argv) > 1:
+        reference = sys.argv[1]
+    else:
+        reference = 'pbs_202109_glorys'
 
     dicts = ut._get_dict_paths('../configs/grid_config_esmf.txt')
     dicts = dicts[reference]

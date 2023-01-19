@@ -1,3 +1,4 @@
+import sys
 from typing import IO
 import numpy as np
 import xarray as xr
@@ -273,8 +274,12 @@ if __name__ == '__main__':
     # it will use the average of initial conditions source
     horizonta_homog_fields = False
 
-    reference = 'bacia_santos_nested'
-    reference = 'swatl_2022'
+    # -- gets  the information from the config file -- #
+    # getting the referemce domain from shell 
+    if len(sys.argv) > 1:
+        reference = sys.argv[1]
+    else:
+        reference = 'pbs_202109_glorys'
 
 
     dicts = ut._get_dict_paths('../configs/grid_config_esmf.txt')

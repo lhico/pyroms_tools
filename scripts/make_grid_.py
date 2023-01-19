@@ -1,15 +1,13 @@
+import sys
 import matplotlib.pyplot as plt
 import os.path as osp
-from pyroms import _iso
 import numpy as np
-from mpl_toolkits.basemap import Basemap, shiftgrid
+from mpl_toolkits.basemap import Basemap
 from scipy.interpolate import griddata
 import xarray as xr
 # from utils import configs
 import pyroms
-from scipy import ndimage
 from scipy import signal
-from bathy_smoother import bathy_tools, bathy_smoothing
 from utils import utils as ut
 
 def hgrid(lon_rho, lat_rho):
@@ -36,7 +34,6 @@ def hgrid(lon_rho, lat_rho):
         vv[:, 1] = ya
         hgrd.mask_polygon(vv,mask_value=0)
     return hgrd, base
-
 
 def h_bathymetry(topo, lon, lat, hgrd):
     # -- prepare bathymetry -- #
@@ -74,7 +71,6 @@ def h_bathymetry(topo, lon, lat, hgrd):
 
     return h,hraw
 
-
 def rotate_coords(xm, ym, ang_rot, degrees=False):
     xm_mean = np.mean(xm)
     ym_mean = np.mean(ym)
@@ -92,7 +88,6 @@ def rotate_coords(xm, ym, ang_rot, degrees=False):
     xrot += xm_mean
     yrot += ym_mean
     return xrot, yrot
-
 
 def interpolate_bathymetry(ddir, hgrd):
     window = np.ones([5,5])
@@ -124,7 +119,12 @@ if __name__ == '__main__':
     # plt.close('all')
 
     # -- gets  the information from the config file -- #
-    reference = 'pbs_202109_glorys'
+    # getting the referemce domain from shell 
+    if len(sys.argv) > 1:
+        reference = sys.argv[1]
+    else:
+        reference = 'pbs_202109_glorys'
+
     dicts = ut._get_dict_paths('../configs/grid_config_pyroms.txt')
     dicts = dicts[reference]
     
