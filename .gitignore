@@ -11,3 +11,4 @@ configs/*
 
 # not ignore template files
 !configs/_template_*
+!configs/README.md
