@@ -7,3 +7,7 @@ data/*
 **/scripts/utils/*.c
 **/scripts/utils/*.so
 **/__pycache__
+configs/*
+
+# not ignore template files
+!configs/_template_*
