@@ -30,16 +30,20 @@ CGrid_TPXO8/tidal_ellipse.py for more details.
 
 import netCDF4 as nc
 import numpy as np
-from scipy.interpolate import griddata
 from utils import utils as ut
-import os
+import os, sys
 import pyroms
-import pyroms_toolbox
 
 import CGrid_TPXO8
 os.environ["PYROMS_GRIDID_FILE"] = "/home/lhico/pyroms_tools/configs/gridid.txt"
 
-reference = 'pbs_202109_glorys'
+# -- gets  the information from the config file -- #
+# getting the referemce domain from shell 
+if len(sys.argv) > 1:
+    reference = sys.argv[1]
+else:
+    reference = 'pbs_202109_glorys'
+
 dicts = ut._get_dict_paths('../configs/grid_config_pyroms.txt')
 dicts = dicts[reference]
 

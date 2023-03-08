@@ -20,7 +20,7 @@ There are three files that configures the grid and interpolation details. **Idea
 
 Within these configuration files we have paths, grid configurations, variable names maps and other information that used by the scripts.
 
-### **1.1 Installation**
+### **1.1 Installation (pyroms)**
 
 These tools are based on PyROMS, which is not simple to compile. For this reason we provide a docker image and a Dockerfile. There are two ways to install it. The following commands will allow you to run a docker container with pyroms and work  with pyroms_tools:
 
@@ -88,6 +88,20 @@ sudo docker run -it  \
 ```
 
 We don't include the installation of X11 in the Dockerfile, because it depends on hardware. A more in-depth explanation may be found [here](https://stackoverflow.com/questions/25281992/alternatives-to-ssh-x11-forwarding-for-docker-containers)
+
+
+### **1.3 Installation xesmf
+
+In order to have a working xesmf environment using miniconda, use the following commands.
+
+```
+conda create -n xesmf_teste python=3.7
+conda activate xesmf_teste
+conda install -c conda-forge xesmf
+conda install -c conda-forge xesmf esmpy=8.0.0
+conda install -c conda-forge dask netCDF4
+conda install -c conda-forge matplotlib cartopy
+```
 
 ## 2. Scripts structure
 

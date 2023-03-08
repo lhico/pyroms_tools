@@ -1,13 +1,16 @@
 import pyroms
-import pyroms_toolbox
 import CGrid_TPXO8
 from utils import utils as ut
-import os
+import os, sys
 os.environ["PYROMS_GRIDID_FILE"] = "/home/lhico/pyroms_tools/configs/gridid.txt"
 
-
 # -- gets  the information from the config file -- #
-reference = 'pbs_202109_glorys'
+# getting the referemce domain from shell 
+if len(sys.argv) > 1:
+    reference = sys.argv[1]
+else:
+    reference = 'pbs_202109_glorys'
+    
 dicts = ut._get_dict_paths('../configs/grid_config_pyroms.txt')
 dicts = dicts[reference]
 
