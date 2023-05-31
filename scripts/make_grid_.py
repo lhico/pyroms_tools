@@ -9,6 +9,8 @@ import xarray as xr
 import pyroms
 from scipy import signal
 from utils import utils as ut
+from bathy_smoother import bathy_tools, bathy_smoothing
+
 
 def hgrid(lon_rho, lat_rho):
     # Grid positions
@@ -129,7 +131,7 @@ if __name__ == '__main__':
     dicts = dicts[reference]
     
     # -- paths -- #s
-    odir  = dicts['output_dir'] 
+    # odir  = dicts['output_dir'] 
     bfile = dicts['bathy_file']
 
     # -- horizontal grid parameters -- #
@@ -144,6 +146,7 @@ if __name__ == '__main__':
     theta_s = dicts['grid.theta_s']
     theta_b = dicts['grid.theta_b']
     Tcline  = dicts['grid.Tcline']
+    gridout = dicts['grid.grid']
 
 
     #  -- grid rotation -- #
@@ -159,7 +162,7 @@ if __name__ == '__main__':
     #pyroms.grid.edit_mask_mesh(hgrd, proj=base)
     #edit_mask_mesh_ij is a faster version using imshow... but no base projection.
     coast = pyroms.utility.get_coast_from_map(base)
-    pyroms.grid.edit_mask_mesh_ij(hgrd, coast=coast)
+    # pyroms.grid.edit_mask_mesh_ij(hgrd, coast=coast)
 
     topo = interpolate_bathymetry(bfile, hgrd)
 
@@ -180,6 +183,6 @@ if __name__ == '__main__':
     grd = pyroms.grid.ROMS_Grid(grd_name, hgrd, vgrd)
 
     # write grid to netcdf file
-    pyroms.grid.write_ROMS_grid(grd, filename=osp.join(odir, 'roms_grid00.nc'))
+    pyroms.grid.write_ROMS_grid(grd, filename=gridout)
 
 
