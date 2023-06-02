@@ -1,5 +1,5 @@
 {
-  'ceres4': {
+  'pbs_202109_glorys': {
     'output_dir'       : '/home/lhico/pyroms_tools/data/treated',
     'bathy_file'       : '/home/lhico/pyroms_tools/data/raw/gebco.nc',
     'grid.dxdy'        : 0.125,
@@ -18,12 +18,12 @@
     'smooth.smooth'    : 0.2,
     'smooth.nested'    : False,
     'smooth.inputaux'  : '',
-    'gridid.gridname'  : 'ceres4',
+    'gridid.gridname'  : 'pbs_202109_glorys',
     'ic.starttime'     : '2019-08-01T12:00:00',
     'ic.output'        : '/home/lhico/pyroms_tools/data/treated/roms_ic_empty.nc',
     'ic.interp_varbs'  : ['zos', 'thetao', 'so'],
     'ic.interp_varbs2' : ['so', 'thetao', 'zos', 'u', 'v'],
-    'gridid.gridname'   : 'ceres4',   
+    'gridid.gridname'   : 'pbs_202109_glorys',   
     'bndry.dummytime'  : '2019-08-01T12:00:00',
     'bndry.output'     : 'home/lhico/pyroms_tools/data/treated/romsgrid_bdry_empty.nc',
     'tpxo.xrange'      : (1300,2500),
