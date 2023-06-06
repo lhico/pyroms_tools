@@ -1,12 +1,13 @@
 {
-'swatl_2022': {
-    'grid_dir'      : '/haxome/otel/Dropbox/trabalho_irado/2021/postdoc/202101_caracterizacao_ambiental_PCSE/roms_tools_projetoBS/data/roms_files/pBS_climatology/202108_pBS_ideal_clim_20lev/bacia_santos.nc',
-    'ic.source_file': '/home/otel/Dropbox/trabalho_irado/2021/postdoc/2021_data/roms_files/pBS/202108_grid5km',
-    'ic.ic_file'    : '/home/otel/Dropbox/trabalho_irado/2021/postdoc/202101_caracterizacao_ambiental_PCSE/roms_tools_projetoBS/data/roms_files/pBS_climatology/202108_pBS_ideal_clim_20lev/pBS_ic_gambiarra.nc',
-    'ic.output_file': '/home/otel/Dropbox/trabalho_irado/2021/postdoc/202101_caracterizacao_ambiental_PCSE/roms_tools_projetoBS/data/roms_files/pBS_climatology/202108_pBS_ideal_clim_20lev/pBS_ic_gambiarra1.nc',
-    'bdry.src_file' : '/home/otel/Dropbox/trabalho_irado/2022/postdoc/202203_ceresIV/pyroms_tools/data/raw/2022_swatl_2010*.nc',
-    'bdry.bdry_file': '/home/otel/Dropbox/trabalho_irado/2022/postdoc/202203_ceresIV/pyroms_tools/data/treated/empty_bdry.nc',
-    'bdry.outfile'  : '/home/otel/Dropbox/trabalho_irado/2022/postdoc/202203_ceresIV/pyroms_tools/data/treated/swatl_2022_bdry_%s.nc',
+'ceres4': {
+    'grid_dir'      : '/home/dsasaki/Documents/2023/pyroms_tools/data/treated/romsgrid_smooth.nc',
+    'ic.source_file': '/home/dsasaki/data/glorys/swatl2022/2022_swatl_2010-05-22_00:00:00_2010-05-29_00:00:00.nc',
+    'ic.ic_file'    : '/home/dsasaki/Documents/2023/pyroms_tools/data/treated/roms_ic_empty.nc',
+    'ic.output_file': '/home/dsasaki/Documents/2023/pyroms_tools/data/treated/roms_ic.nc',
+    'ic.hor_homog'  : False,
+    'bdry.src_file' : '/home/dsasaki/data/glorys/swatl2022/2022_swatl_2010*.nc',
+    'bdry.bdry_file': '/home/dsasaki/Documents/2023/pyroms_tools/data/treated/empty_bdry.nc',
+    'bdry.outfile'  : '/home/dsasaki/Documents/2023/pyroms_tools/data/treated/roms_bdry_%s',
     'bdry.dxdy'     : 0.083,
     'rename_dims': {'longitude':'lon','latitude':'lat','depth':'z'},
     'rename_vars': {'thetao':'temp','so':'salt','depth':'z', 'uo':'u', 'vo':'v', 'zos':'zeta'},
@@ -14,6 +15,27 @@
     'invert': -1,
     'delete_idepths': [],
     },
+'bulk_fluxes':{
+    'atmos.variables'  : {'mean_northward_turbulent_surface_stress',
+                          'mean_eastward_turbulent_surface_stress', 
+                          'mean_surface_net_long_wave_radiation_flux',
+                          'mean_surface_sensible_heat_flux',        
+                          'mean_surface_latent_heat_flux',          
+                          'mean_surface_downward_long_wave_radiation_flux',
+                          'mean_surface_net_short_wave_radiation_flux',
+                          't',          
+                          'mean_evaporation_rate',
+                          'sea_surface_temperature',
+                          'mean_sea_level_pressure',
+                          '10m_u_component_of_wind',
+                          '10m_v_component_of_wind'
+                        },
+    'atmos.extrap'     : 'laplace',
+    'atmos.meanrate'   : True,
+    'atmos.bulkfluxes' : False,
+    'atmos.listfiles'  : '/home/otel/Dropbox/trabalho_irado/2021/postdoc/2021_data/mercator_reanalysis_evaluation/data/era5/202209_nesting_test',
+    'atmos.savedir'    : '/home/otel/Desktop/deletar/pyroms_tools/data',
+  },
 }
 
 

@@ -254,7 +254,7 @@ if __name__ == '__main__':
 
     # set this true when testing for horizontal homogenous fields
     # it will use the average of initial conditions source
-    horizonta_homog_fields = True
+    
 
     # -- gets  the information from the config file -- #
     # getting the referemce domain from shell 
@@ -266,18 +266,24 @@ if __name__ == '__main__':
     dicts = ut._get_dict_paths('../configs/grid_config_esmf.txt')
     dicts = dicts[reference]
 
+
     outfile = dicts['ic.output_file']        # output file name
     rename_coords = dicts['rename_dims']  # renaming source file coordinates
     rename_vars   = dicts['rename_vars']  # renaming sourfe file variables
     varbs = dicts['varbs_rho']            # which variables will be interpolated
     invert_depth = dicts['invert']
     zdel = dicts['delete_idepths']
+    horizonta_homog_fields = dicts['ic.hor_homog']
 
     # 1) read data
     nc_roms_grd  = xr.open_dataset(dicts['grid_dir'])  # roms grid
     nc_ini_src   = xr.open_dataset(dicts['ic.source_file'])   # initial conditions sourec
     nc_out0       = xr.open_dataset(dicts['ic.ic_file']) # target file (we will replace some of its variables)
     nc_out = nc_out0.copy()
+
+    
+    if len(nc_ini_src.dims) ==4:
+        nc_ini_src = nc_ini_src.isel(time=[0])
 
     ds_out = nc_roms_grd  #.rename({'lon_rho':'lon', 'lat_rho':'lat'})  # rename variables so xesmf understand them
 

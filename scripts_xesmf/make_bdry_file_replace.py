@@ -285,7 +285,7 @@ if __name__ == '__main__':
     dicts = ut._get_dict_paths('../configs/grid_config_esmf.txt')
     dicts = dicts[reference]
 
-    # outfile = dicts['ic.output_file']        # output file name
+    outfile = dicts['ic.output_file']        # output file name
     rename_coords = dicts['rename_dims']  # renaming source file coordinates
     rename_vars   = dicts['rename_vars']  # renaming sourfe file variables
     varbs         = dicts['varbs_rho']            # which variables will be interpolated

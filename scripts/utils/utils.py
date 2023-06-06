@@ -167,3 +167,27 @@ def refine_grid(nc, Gfactor=3):
 
     return lonrF, latrF
 
+def create_grid_file(id_val, name_val, grdfile_val, N_val, grdtype_val, Vtrans_val, theta_s_val, theta_b_val, Tcline_val):
+    content = f'''#
+id      = {id_val}
+name    = {name_val}
+grdfile = {grdfile_val}
+N       = {N_val}
+grdtype = {grdtype_val}
+Vtrans  = {Vtrans_val}
+theta_s = {theta_s_val}
+theta_b = {theta_b_val}
+Tcline  = {Tcline_val}
+#'''
+
+    with open('gridid.txt', 'w') as file:
+        file.write(content)
+
+
+def update_mask(ds):
+    ds = ds.copy()
+    ds['mask_u'].values = ds['mask_rho'][:,:-1].values * ds['mask_rho'][:,1:].values
+    ds['mask_v'].values = ds['mask_rho'][:-1,:].values * ds['mask_rho'][1:,:].values
+    ds['mask_psi'].values = ds.mask_u[:-1, :].values * \
+                        ds.mask_v[:, :-1].values
+    return ds

@@ -10,7 +10,7 @@ import os.path as osp
 import os
 from pyroms import vgrid
 from pyroms_toolbox import rx1
-
+import sys
 
 
 def plot(h2, x):
@@ -80,30 +80,38 @@ if __name__ == '__main__':
     
     nested_grid = True
     # -- gets  the information from the config file -- #
-    reference = 'pbs_202109_glorys'
+    reference = sys.argv[1] if len(sys.argv)==2  else 'swatl_2022_deep4_nested'
+
     dicts = ut._get_dict_paths('../configs/grid_config_pyroms.txt')
     dicts = dicts[reference]
 
-    gdir     = dicts['output_dir']
-    capdepth = dicts['smooth.capdepth']
-    smooth   = dicts['smooth.smooth'] 
-    nc0 = xr.open_dataset(osp.join(gdir,'roms_grid00.nc'))
-    # nc0 = xr.open_dataset(osp.join(gdir,'bacia_santos_nest_corrected.nc'))
+    input       = dicts['smooth.input']
+    inputaux       = dicts['smooth.inputaux']
+    output        = dicts['smooth.output']
+    capdepth    = dicts['smooth.capdepth']
+    smooth      = dicts['smooth.smooth']
+    nested_grid = dicts['smooth.nested']
+
+    nc0 = xr.open_dataset(input)
     
     # matlab function does not copy some values from original file
     # to nested file (Matlab R2021b Update 4 (9.11.0.2022996) 64-bit (glnxa64))
     if nested_grid:
-        ncaux = xr.open_dataset(osp.join(gdir,'bacia_santos.nc')) 
+        ncaux = xr.open_dataset(inputaux) 
         nc0.load()
         for i in ['theta_s', 'theta_b','hc', 'Cs_r', 'Cs_w', 'Tcline']:
             nc0[i].values = ncaux[i].values
+        nc0.assign_coords(s_rho=ncaux.s_rho)
     
 
     nc = nc0.copy()
+    nc = nc.fillna(capdepth)
+    nc.mask_rho.values[np.isnan(nc.h.values)] = 0
+    nc = ut.update_mask(nc)
+    nc = nc.fillna(5)
 
 
-
-    rx1in = calculate_rx1(nc0, '# -- original rx1 values -- #')
+    rx1in = calculate_rx1(nc, '# -- original rx1 values -- #')
 
     h = nc.h.values.copy()
     # smooth = abs(ndimage.gaussian_filter(z/z.max()-1,8))
@@ -112,46 +120,28 @@ if __name__ == '__main__':
     h[h>capdepth] = capdepth
 
     mask = nc.mask_rho.values.copy()
-    amp = mask.copy()
-    amp[:] = 10000
-    # amp[nc0.h<200]=1.
+
     h1 =  h
 
     # h1 = bathy_smoothing.smoothing_Positive_rx0(mask, h1, ii)
 
-    # h1 = LP_bathy_smoothing.LP_smoothing_rx0_heuristic(mask,
-    #                                         nc0.h.values,ii,
-    #                                         -1*np.ones(nc.h.values.shape),
-    #                                         amp)
+    mask0 = mask.copy()
 
-    # h3 = bathy_smoothing.smoothing_Positive_rx0(mask, h2, 0.05)
     h1 = bathy_smoothing.smoothing_PlusMinus_rx0(mask, h1, smooth,
             np.gradient(nc.x_rho)[0]*np.gradient(nc.y_rho)[0])
 
-    # h1 = bathy_smoothing.smoothing_Positive_rx0(mask, h1, ii)
-
-
-    # h2 = bathy_smoothing.smoothing_PlusMinus_rx0(mask, h1[0], ii,
-    #     np.gradient(nc.x_rho)[0]*np.gradient(nc.y_rho)[0])
 
     nc.h.values = h1[0]
     nc.hraw.values[0] = h1[0]
     nc.attrs['smoothing function'] = 'LP_smoothing_rx0'
     nc.attrs['rx0'] = smooth
 
+    rx1out = calculate_rx1(nc, '# -- modified rx1 values -- #')
 
-    fileout = osp.join(gdir, 'bacia_santos.nc')
-    # fileout = osp.join(gdir, 'bacia_santos_nest_smooth.nc')
+    nc['rx1'] = nc.h.copy()
+    nc.rx1.values[:-1,:-1] = rx1out 
+
+    # fileout = osp.join(gdir, 'bacia_santos.nc')
+    fileout = outdir
     os.system(f'rm {fileout}')
     nc.to_netcdf(fileout)
-
-
-    rx1out = calculate_rx1(nc, '# -- modified rx1 values -- #')
-    plt.figure()
-    plt.hist(rx1out.ravel(),bins=50)
-    plt.yscale('log')
-    plt.savefig('rx1.png')
-
-    print(' \n-- plotting bathymetry comparison-- \n')
-    plot_structure(nc0, nc, fsize=[15,5])
-    plot_structure(nc0, nc, fsize=[15,5], vmin=5.1,vmax=100, s=1)
