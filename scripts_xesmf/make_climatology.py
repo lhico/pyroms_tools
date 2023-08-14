@@ -103,7 +103,61 @@ class interpolationGlorys2Roms(object):
 
         return self.dssource1['time']
 
-    def interpolate(self, varb):
+
+    def calculate_geostrophy(self):
+        ds = self.dssource
+        xm, ym = np.meshgrid(ds.latitude.values,
+                            ds.longitude.values,)
+
+        f = gsw.f(ym)
+        g = 9.8
+
+
+
+        ds['f'] = (['latitude', 'longitude'], f)
+        ds['psi'] = ds['zos'] * 9.8/ ds['f']
+
+        ds['dpsi_x'] = (['time', 'latitude', 'longitude'], np.gradient(ds['psi'].values, axis=2))
+        ds['dpsi_y'] = (['time', 'latitude', 'longitude'], np.gradient(ds['psi'].values, axis=1))
+        ds.drop('psi')
+
+
+        # calcualte distances
+        lons = ds.longitude.values
+        lats = ds.latitude.values
+
+        # provisory dy dx
+        dy = gsw.distance(xm,ym,axis=0)
+        dx = gsw.distance(xm,ym,axis=1)
+
+        # cumulative sum 
+        x = np.cumsum(dlon, axis=1)
+        y = np.cumsum(dlat, axis=0)
+
+        # recalculating distances to preserve dimensions
+        x = np.insert(x, 0, values=0, axis=1)
+        y = np.insert(y, 0, values=0, axis=0)
+
+        dx = np.gradient(x, axis=1)
+        dy = np.gradient(y, axis=0)
+
+        # set in xarray dataset 
+        ds['dx'] = (['latitude', 'longitude'], dx)
+        ds['dy'] = (['latitude', 'longitude'], dy)
+
+        # calculate geostrophic velocities
+        ds['ug'] = -ds['dpsi_y']/ds['dy']
+        ds['vg'] = ds['dpsi_x']/ds['dx']
+
+
+        # plt.close('all')
+        # fig = plt.figure(figsize=[20,20])
+        # plt.contourf(xm,ym,ds['zos'][0], levels=30,zorder=0, cmap=plt.cm.jet)
+        # plt.quiver(xm[::2,::2],ym[::2,::2], ds['ug'][0,::2,::2], ds['vg'][0,::2,::2], scale=20, width=0.0005)
+        # plt.savefig('bla.png')
+
+
+    def interpolate3d(self, varb):
         outfield = np.zeros(self.zg.shape)
         for i in range(self.zg.shape[2]):
             print(i)
@@ -141,7 +195,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         reference = sys.argv[1]
     else:
-        reference = 'ceresIV_2.9'
+        reference = 'ceresIV_2.012'
 
     dicts = ut._get_dict_paths('../configs/grid_config_esmf.txt')
     dicts = dicts[reference]
@@ -163,18 +217,17 @@ if __name__ == '__main__':
         q = interpolationGlorys2Roms(grid,
                                     source,
                                     load=True)
-
-
+        q.calculate_geostrophy()
         q.set_coords(tref, gtype='rho', time_type=None)
-        temp = q.interpolate('thetao')
-        salt = q.interpolate('so')
-        # zeta = q.interpolate('zos')
+        temp = q.interpolate3d('thetao')
+        salt = q.interpolate3d('so')
+        # zeta = q.interpolate3d('zos')
 
-        # interpolate u and v onto rho grid (due to rotation)
+        # interpolat3d u and v onto rho grid (due to rotation)
         q.set_coords(tref, gtype='rho', time_type=None)
-        v  = q.interpolate('vo')
+        v  = q.interpolate3d('vo')
         t = q.set_coords(tref, gtype='rho', time_type=None)
-        u    = q.interpolate('uo')
+        u    = q.interpolate3d('uo')
 
         # rotating u and v as eta and xi coordinate components
         rot = dsgrid.angle.values
@@ -186,6 +239,20 @@ if __name__ == '__main__':
         v1 = mag * np.cos(angle + rot)
 
 
+
+        # interpolate u and v onto rho grid (due to rotation)
+        v  = q.ds1['ug']
+        u  = q.ds1['vg']
+
+        # rotating u and v as eta and xi coordinate components
+        rot = dsgrid.angle.values
+
+        mag = (u**2 + v**2)**0.5
+        angle = np.arctan2(v,u)
+
+        ug = -mag * np.sin(angle + rot)
+        vg = mag * np.cos(angle + rot)
+
         dsgrid = dsgrid.assign_coords(time=[tref])
         dsgrid = dsgrid.assign_coords(temp_time=[tref])
         dsgrid = dsgrid.assign_coords(salt_time=[tref])
@@ -195,11 +262,12 @@ if __name__ == '__main__':
         dsgrid['u'] = (('time', 's_rho', 'eta_u', 'xi_u'), [u1[:,:,:-1]])
         dsgrid['v'] = (('time', 's_rho', 'eta_v', 'xi_v'), [v1[:,:-1,:]])
 
+        dsgrid['ubar'] = (('time', 'eta_u', 'xi_u'), [ug[:,:-1]])
+        dsgrid['vbar'] = (('time', 'eta_v', 'xi_v'), [vg[:-1,:]])
+
 
         for v,c in zip(['temp', 'salt','v','u'],['rho','rho','v','u']):
             dsgrid = nearest_interpolation(dsgrid, v, hgrid=c)
-
-
 
 
         dsgrid['time'].attrs = {}
