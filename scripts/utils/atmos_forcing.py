@@ -465,4 +465,13 @@ variables_list = {
         'units': 'W m-2 degC-1',
         'time': 'sst_time'
     },
+    'sp': {
+        'ECMWFlongname': '',
+        'Vname': 'Surface pressure',
+        'accumulation': False,
+        'outputName': 'Pair',
+        'scale': 1,
+        'units': 'mbar',
+        'time': 'pair_time'
+    }
 }
