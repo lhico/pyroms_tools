@@ -2,11 +2,14 @@ import xarray as xr
 import xarray_decorators
 import numpy as np
 import xesmf as xe
-from scipy import interpolate as itp
+# from scipy import interpolate as itp
 import datetime as dtt
 from netCDF4 import date2num
 import sys
 from utils import utils as ut
+import pandas as pd
+import gsw
+from utils.interpolation import interpolation as itp
 
 class interpolationGlorys2Roms(object):
     def __init__(self, fgrid, fpath, load=False):
@@ -46,6 +49,7 @@ class interpolationGlorys2Roms(object):
         dsgrid = dsgrid.rename({f'lon_{gtype}':'lon', f'lat_{gtype}':'lat'})
         dsgrid = dsgrid.set_coords(['lon', 'lat'])
 
+        # select and set up time
         if time_type is None:
             self.dssource1 = self.dssource
             ds0 = self.dssource1.sel(time=itime, method='nearest')
@@ -57,13 +61,12 @@ class interpolationGlorys2Roms(object):
         else:
             raise IOError("time_type shoud be None or 'monthly'")
         
-        ds1 = ds0.roms.interpolate(dsgrid, {'longitude':'lon', 'latitude':'lat'})
-        self.ds1= ds1.roms.interpolate(dsgrid, gtype)
+        self.ds1 = ds0.roms.interpolate(dsgrid,
+                {'longitude':'lon', 'latitude':'lat'},
+                xesmf_regridder_kwargs=dict(extrap_method='nearest_s2d'))
+        a = self.ds1
 
-        a = ds1.roms.interpolate(dsgrid, 'bla')
-        self.dsglo = a
-
-
+        # glorys interpolated horizontally to roms
         self.zz   = -np.tile(a.depth.values[:,None,None], (1, *a.lon.shape) )
         self.lonz = np.broadcast_to(a.lon.values, (ds0.depth.size, *a.lon.shape))
         self.latz = np.broadcast_to(a.lat.values, (ds0.depth.size, *a.lat.shape))
@@ -127,16 +130,16 @@ class interpolationGlorys2Roms(object):
         lats = ds.latitude.values
 
         # provisory dy dx
-        dy = gsw.distance(xm,ym,axis=0)
-        dx = gsw.distance(xm,ym,axis=1)
+        dy = gsw.distance(xm,ym,axis=1)
+        dx = gsw.distance(xm,ym,axis=0)
 
         # cumulative sum 
-        x = np.cumsum(dlon, axis=1)
-        y = np.cumsum(dlat, axis=0)
+        x = np.cumsum(dx, axis=1)
+        y = np.cumsum(dy, axis=0)
 
         # recalculating distances to preserve dimensions
-        x = np.insert(x, 0, values=0, axis=1)
-        y = np.insert(y, 0, values=0, axis=0)
+        x = np.insert(x, 0, values=0, axis=0)
+        y = np.insert(y, 0, values=0, axis=1)
 
         dx = np.gradient(x, axis=1)
         dy = np.gradient(y, axis=0)
@@ -154,29 +157,53 @@ class interpolationGlorys2Roms(object):
         # fig = plt.figure(figsize=[20,20])
         # plt.contourf(xm,ym,ds['zos'][0], levels=30,zorder=0, cmap=plt.cm.jet)
         # plt.quiver(xm[::2,::2],ym[::2,::2], ds['ug'][0,::2,::2], ds['vg'][0,::2,::2], scale=20, width=0.0005)
-        # plt.savefig('bla.png')
+        # plt.savefig('bla.png', dpi=300)
 
-
-    def interpolate3d(self, varb):
+    def interpolate3d(self,varb):
+        zs = self.zg
         outfield = np.zeros(self.zg.shape)
-        for i in range(self.zg.shape[2]):
-            print(i)
-            zsurfi   = self.zg[:,:,i].values
-            lonsurfi = self.long[:,:,i]
-            values = self.dsglo[varb][:,:,i].values.ravel()
 
-            zsurf   = self.zz[:,:,i]
-            lonsurf = self.lonz[:,:,i]
+        xm = self.lonz
+        ym = self.latz
+        zm = self.zz[::-1]
+        varb = self.ds1[varb]
+        varb = varb.bfill('xi_rho')
+        varb = varb.ffill('xi_rho')
+        varb = varb.bfill('eta_rho')
+        varb = varb.ffill('eta_rho')
 
+        varb = varb.values[::-1]
 
-            aux = itp.griddata((lonsurf.ravel(),zsurf.ravel()),
-                            values,
-                            (lonsurfi.ravel(), zsurfi.ravel())
-                                )
-            aux = aux.reshape(zsurfi.shape)
-
-            outfield[:,:,i] = aux
+        nzs = zs.shape[0]
+        nz, ny, nx = xm.shape
+        aux = itp.interp3d_along_axis0(zs,
+                                    xm,ym,zm,
+                                    varb,
+                                    nzs,nx,ny,nz)
+        aux = np.where(aux==9999.0, np.nan, aux)
+        outfield[...] = aux
         return outfield
+
+    # def interpolate3d(self, varb):
+    #     outfield = np.zeros(self.zg.shape)
+    #     for i in range(self.zg.shape[2]):
+    #         print(i)
+    #         zsurfi   = self.zg[:,:,i].values
+    #         lonsurfi = self.long[:,:,i]
+    #         values = self.dsglo[varb][:,:,i].values.ravel()
+
+    #         zsurf   = self.zz[:,:,i]
+    #         lonsurf = self.lonz[:,:,i]
+
+
+    #         aux = itp.griddata((lonsurf.ravel(),zsurf.ravel()),
+    #                         values,
+    #                         (lonsurfi.ravel(), zsurfi.ravel())
+    #                             )
+    #         aux = aux.reshape(zsurfi.shape)
+
+    #         outfield[:,:,i] = aux
+    #     return outfield
 
 
 def nearest_interpolation(dsgrid, varb, hgrid='rho'):
@@ -202,12 +229,16 @@ if __name__ == '__main__':
     grid  = dicts['grid_dir']
     source= dicts['clim.src_file']
     output= dicts['clim.outfile']
+    tstart = dicts['clim.date'][0]
+    tfinal = dicts['clim.date'][1]
+    tfreq  = dicts['clim.date'][2]
+    daterange = pd.date_range(start=tstart, end=tfinal, freq=tfreq)
 
-
-
-    for datetime in dicts['clim.date']:
+    print('starting loop')
+    for datetime in daterange:
+        print(datetime)
         dsgrid = xr.open_dataset(grid)
-        tref = dtt.datetime(*datetime)
+        tref = datetime.to_pydatetime()
         tref1 = date2num(tref, 'days since 1990-01-01 00:00:00')
 
 
@@ -228,6 +259,8 @@ if __name__ == '__main__':
         v  = q.interpolate3d('vo')
         t = q.set_coords(tref, gtype='rho', time_type=None)
         u    = q.interpolate3d('uo')
+
+        print('interpolation done')
 
         # rotating u and v as eta and xi coordinate components
         rot = dsgrid.angle.values
@@ -276,4 +309,7 @@ if __name__ == '__main__':
         # dsgrid['time'].attrs['cycle_length'] = np.array(12).astype(float)
 
         dsgrid.to_netcdf(output % str(tref).replace(' ','T'))
+        print(output % str(tref).replace(' ','T') + ' saved')
+print('Done')
+
 
