@@ -431,6 +431,6 @@ if __name__ == '__main__':
         nc_out1 = nc_out1.assign_coords(ocean_time=[tref1[i]])
         nc_out1['ocean_time'].attrs['units'] = 'days since 1990-01-01 00:00:00'
 
-        nc_out1.to_netcdf(outfile % (str(tref[0])[:19].replace(' ', 'T')))
+        nc_out1.to_netcdf(outfile % (str(tref[i])[:19].replace(' ', 'T')))
 
 
