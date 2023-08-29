@@ -1,11 +1,39 @@
 import xarray as xr
 from utils.atmos_forcing import dQdT, extrapolating_era5, variables_list
+from utils import utils as ut
 import numpy as np
 import pandas as pd
 from matplotlib import rcParams
-from netCDF4 import date2num
+from netCDF4 import date2num, num2date
 from scipy import ndimage
+import sys
+import os
 
+"""
+This script preprocesses the era5 winds for roms
+
+required variables for the script (single levels product of ERA5):
+
+ATTENTION TO THE UNITS! You can switch fluxes for mean fluxes provided you adjust the scale factors
+https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview
+varinfo.yml in ROMS
+
+"10m_u_component_of_wind",     # used in dQdSST
+"10m_v_component_of_wind",     # used in dQdSST
+"2m_temperature",              # used in dQdSST/air_density
+"sea_level_pressure",          # used in dQdSST/air_density
+"sea_surface_temperature",     # used in masks
+"surface_latent_heat_flux",    # used in heat_flux
+"surface_sensible_heat_flux",  # used in heat_flux
+"surface_net_solar_radiation",   # used in heat_flux
+"surface_net_thermal_radiation", # used in heat_flux
+"total_precipitation",         # used in net_freshwater
+"evaporation",                 # used in net_freshwater
+
+required variables for the script (pressure levels product of ERA5)?
+"specific_humidity"            # used in air_density
+
+"""
 
 def mixing_ratio(specific_humidity):
     q = specific_humidity
@@ -42,38 +70,36 @@ def heat_flux(ds,
 
 
 
-"""
-required variables for the script (single levels product of ERA5):
+# -- gets  the information from the config file -- #
+# getting the referemce domain from shell 
+if len(sys.argv) > 1:
+    reference = sys.argv[1]
+else:
+    reference = 'ceresIV_2.012'
 
-ATTENTION TO THE UNITS! You can switch fluxes for mean fluxes provided you adjust the scale factors
-https://cds.climate.copernicus.eu/cdsapp#!/dataset/reanalysis-era5-single-levels?tab=overview
-varinfo.yml in ROMS
-
-"10m_u_component_of_wind",     # dQdSST
-"10m_v_component_of_wind",     # dQdSST
-"2m_temperature",              # dQdSST/air_density
-"sea_level_pressure",          # dQdSST/air_density
-"sea_surface_temperature",     # masks
-"surface_latent_heat_flux",    # heat_flux
-"surface_sensible_heat_flux",  # heat_flux
-"surface_net_solar_radiation",   # heat_flux
-"surface_net_thermal_radiation", # heat_flux
-"total_precipitation",         # net_freshwater
-"evaporation",                 # net_freshwater
-
-required variables for the script (pressure levels product of ERA5)?
-"specific_humidity"            # air_density
+dicts = ut._get_dict_paths(f'{os.path.dirname(__file__)}/../configs/grid_config_esmf.txt')[reference]
 
 
-"""
-month = 5
-nc = xr.open_dataset(f'/data0/dsasaki/data/era5/swatl2022/single-levels/era5-single_2010-{month:02d}.nc', decode_times=False)
-nc1 = xr.open_dataset(f'/data0/dsasaki/data/era5/swatl2022/pressure-levels/era5-pressure_2010-{month:02d}.nc', decode_times=False)
+# dicts resolver
+fpath_single   = dicts['frc.era.single']
+fpath_pressure = dicts['frc.era.press']
+time0          = dicts['frc.date'][0]
+timef          = dicts['frc.date'][1]
+dt             = dicts['frc.date'][2]
+odir           = dicts['frc.outputdir']
+
+
+# month = 5
+nc = xr.open_dataset(fpath_single, decode_times=False)
+nc1 = xr.open_dataset(fpath_pressure, decode_times=False)
 nc['q'] = nc1['q']
 sstK = True
 
-tref = pd.date_range(start=f'2010-{month:02d}-01T00:00:00', periods=nc.time.size, freq='1H')
+
+time0 = num2date(nc.time[0].values, nc.time.attrs['units'])
+tref = pd.date_range(start=str(time0), periods=nc.time.size, freq='1H')
 tref1 = date2num(tref.to_pydatetime(), 'days since 1990-01-01 00:00:00')
+
 
 
 metadata = variables_list
@@ -111,9 +137,13 @@ for varname in ['sp','sst', 'metss', 'mntss', 'shflux', 'swflux', 'dQdSST']:
     var = extrapolating_era5(ncout, varname, None, 
                                 extrapolate_method='laplace', dst=ncout, mask=nc['mask'])
 
-    # if varname=='sp':
-    #     aux = ndimage.gaussian_filter(var.sp.values,1)
-    #     var.sp.values = aux     
+    if varname=='sp':
+        aux = extrapolating_era5(ncout, varname, None, 
+                                extrapolate_method='xesmf', dst=ncout, mask=abs(nc['mask']-2+1))
+        var.sp.values = aux.sp.values
+        var['sp'] = var['sp'].fillna(var.sp.mean().values)
+        aux = ndimage.gaussian_filter(var.sp.values,1)
+        var.sp.values = aux
     var = var.reindex(latitude=list(reversed(var.latitude.values)))
     var = var.rename({varname: rename,
                     'latitude': 'lat',
@@ -139,4 +169,8 @@ for varname in ['sp','sst', 'metss', 'mntss', 'shflux', 'swflux', 'dQdSST']:
     # var = var.assign_coords(time=pd.date_range(start=ncout.time.values[0], freq='1H', periods=ncout.time.size))
     print(rename)
     var.attrs = {}
-    var.to_netcdf(f'test_{rename}_2010-{month:02d}.nc', format='NETCDF4')
+    var.to_netcdf(f'test_{rename}_{tref.year[0]}-{tref.month[0]:02d}.nc', format='NETCDF4')
+
+dsout = xr.open_mfdataset(f'test_*_{tref.year[0]}-{tref.month[0]:02d}.nc')
+dsout.to_netcdf(f'{odir}/forcing_{tref.year[0]}-{tref.month[0]:02d}.nc')
+os.system(f'rm test_*_{tref.year[0]}-{tref.month[0]:02d}.nc')
