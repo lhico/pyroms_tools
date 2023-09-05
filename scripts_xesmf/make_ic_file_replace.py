@@ -8,6 +8,8 @@ from scipy import interpolate
 from utils import utils as ut
 import os, sys
 from scipy.spatial import cKDTree
+from netCDF4 import date2num, num2date
+import pandas as pd
 
 
 def compute_depth_layers(ds, hmin=0.1):
@@ -277,11 +279,15 @@ if __name__ == '__main__':
 
     # 1) read data
     nc_roms_grd  = xr.open_dataset(dicts['grid_dir'])  # roms grid
-    nc_ini_src   = xr.open_dataset(dicts['ic.source_file'])   # initial conditions sourec
+    nc_ini_src   = xr.open_dataset(dicts['ic.source_file'], decode_times=False)   # initial conditions sourec
     nc_out0       = xr.open_dataset(dicts['ic.ic_file']) # target file (we will replace some of its variables)
     nc_out = nc_out0.copy()
 
-    
+
+    time0 = num2date(nc_ini_src.time[0].values, nc_ini_src.time.attrs['units'])
+    tref = pd.date_range(start=str(time0), periods=1, freq='1H')
+    tref1 = date2num(tref.to_pydatetime(), 'days since 1990-01-01 00:00:00')
+
     if len(nc_ini_src.dims) ==4:
         nc_ini_src = nc_ini_src.isel(time=[0])
 
@@ -359,6 +365,9 @@ if __name__ == '__main__':
     # nc_out.v.values[:] = 0 
     nc_out1.ubar.values[:] = ((nc_out1.u * nc_out1.s_rho).sum(dim='s_rho') / nc_out1.s_rho.sum()).values
     nc_out1.vbar.values[:] = ((nc_out1.v * nc_out1.s_rho).sum(dim='s_rho') / nc_out1.s_rho.sum()).values
+    nc_out1 = nc_out1.assign_coords(ocean_time=tref1)
+    nc_out1['ocean_time'].attrs['units'] = 'days since 1990-01-01 00:00:00'
+
 
     os.system(f'rm {outfile}')
     nc_out1.to_netcdf(outfile)
