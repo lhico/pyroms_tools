@@ -328,7 +328,7 @@ if __name__ == '__main__':
 
 
     time0 = num2date(nc_ini_src0.time[0].values, nc_ini_src0.time.attrs['units'])
-    tref = pd.date_range(start=str(time0), periods=nc_ini_src0.time.size, freq='1H')
+    tref = pd.date_range(start=str(time0), periods=nc_ini_src0.time.size, freq='1D')
     tref1 = date2num(tref.to_pydatetime(), 'days since 1990-01-01 00:00:00')
 
     dsaux = nc_roms_grd  # remanent of older versions
