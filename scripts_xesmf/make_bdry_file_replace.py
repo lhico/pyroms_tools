@@ -413,6 +413,12 @@ if __name__ == '__main__':
                 nc_out1[f'{varb}_south'].values = nc_aux1[varb].values[:,:,0,:]
                 nc_out1[f'{varb}_west'].values = nc_aux1[varb].values[:,:,:,0]
                 nc_out1[f'{varb}_east'].values = nc_aux1[varb].values[:,:,:,-1]
+
+                nc_out1[f'{varb}_east'] = nc_out1[f'{varb}_east'].bfill(dim='s_rho')
+                nc_out1[f'{varb}_west'] = nc_out1[f'{varb}_west'].bfill(dim='s_rho')
+                nc_out1[f'{varb}_north'] = nc_out1[f'{varb}_north'].bfill(dim='s_rho')
+                nc_out1[f'{varb}_south'] = nc_out1[f'{varb}_south'].bfill(dim='s_rho')
+    
             elif nc_aux1[varb].ndim == 3:
                 nc_out1[f'{varb}_north'].values = nc_aux1[varb].values[:,-1,:]
                 nc_out1[f'{varb}_south'].values = nc_aux1[varb].values[:,0,:]
