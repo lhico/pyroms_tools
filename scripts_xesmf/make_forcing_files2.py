@@ -172,5 +172,5 @@ for varname in ['sp','sst', 'metss', 'mntss', 'shflux', 'swflux', 'dQdSST']:
     var.to_netcdf(f'test_{rename}_{tref.year[0]}-{tref.month[0]:02d}.nc', format='NETCDF4')
 
 dsout = xr.open_mfdataset(f'test_*_{tref.year[0]}-{tref.month[0]:02d}.nc')
-dsout.to_netcdf(f'{odir}/forcing_{tref.year[0]}-{tref.month[0]:02d}.nc')
+dsout.to_netcdf(f'{odir}')
 os.system(f'rm test_*_{tref.year[0]}-{tref.month[0]:02d}.nc')
