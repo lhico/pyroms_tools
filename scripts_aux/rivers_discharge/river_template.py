@@ -1,5 +1,5 @@
-import maskedge
-import click_and_play as cp
+from utils import maskedge
+from utils import click_map as cp
 import xarray as xr
 import matplotlib.pyplot as plt
 import numpy as np
@@ -69,9 +69,9 @@ if __name__ == '__main__':
     when the selection is finished, press q.  At this point, the netcdf
     template should be ready for use.
     """
-    ffile = sys.argv[1] if len(sys.argv) == 4 else "sbb_grid_roms.nc"
-    start=sys.argv[2] if len(sys.argv) == 4 else '2020-01-01'
-    end=sys.argv[3] if len(sys.argv) == 4 else '2020-05-01'
+    ffile = sys.argv[1] if len(sys.argv) == 4 else "modified_grid.nc"
+    start=sys.argv[2] if len(sys.argv) == 4 else '2010-01-01'
+    end=sys.argv[3] if len(sys.argv) == 4 else '2023-01-01'
 
     points = maskedge.main(ffile)
     points = np.array(points)
@@ -79,6 +79,7 @@ if __name__ == '__main__':
 
     # 0 is u, 1 is v
     # +1 (-1) diverges (converges) from left to right in u direction
+    plt.ion()
     plt.close('all')
     tracker = cp.IndexTracker(nc, ttype='get_index')
     while tracker.wait:
@@ -91,10 +92,12 @@ if __name__ == '__main__':
         tracker.ax.figure.canvas.mpl_connect('button_press_event', lambda b: ax.scatter(x, y, zorder=10, c='r', s=1))
         tracker.ax.figure.canvas.mpl_connect('button_press_event', lambda b: scatter(b, tracker))
 
+        plt.pause(2)
+
         fig.canvas.draw_idle()
-        fig.tight_layout()
+        # fig.tight_layout()
         tracker.show()
-        plt.pause(1)
+        plt.pause(2)
 
     ncout = river_points(tracker.points, start=start, end=end, s_rho=nc.s_rho.values)
     ncout.to_netcdf('river_template.nc')
