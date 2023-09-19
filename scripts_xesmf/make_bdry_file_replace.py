@@ -297,7 +297,7 @@ if __name__ == '__main__':
     # average grid spacing in degrees. this is used in the fast marching method
     # within extrapolation_nearest method if you boundaries are presenting null
     # values at ocean points this is value could be the culprit
-    dx            = dicts['bdry.dxdy']
+    dx          = dicts['bdry.dxdy']
     path_grid   = dicts['grid_dir']
     path_icfile = dicts['ic.ic_file']
 
@@ -335,6 +335,16 @@ if __name__ == '__main__':
 
     # loop over time
     for i in range(nc_ini_src0.time.size):
+        output_file = outfile % (str(tref[i])[:19].replace(' ', 'T'))
+
+        # if file is already saved continue to the next iteration
+        flist = glob.glob(output_file)
+        if len(flist)!= 0:
+            print(f'{flist[0]} already saved')
+            continue
+        else:
+            pass
+
         nc_ini_src = nc_ini_src0.isel(time=[i])
 
         if glob.glob(outfile % (str(nc_ini_src.time.values[0])[:19])):
@@ -436,7 +446,6 @@ if __name__ == '__main__':
         
         nc_out1 = nc_out1.assign_coords(ocean_time=[tref1[i]])
         nc_out1['ocean_time'].attrs['units'] = 'days since 1990-01-01 00:00:00'
-
-        nc_out1.to_netcdf(outfile % (str(tref[i])[:19].replace(' ', 'T')))
+        nc_out1.to_netcdf(output_file)
 
 

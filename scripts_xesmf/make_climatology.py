@@ -10,6 +10,8 @@ from utils import utils as ut
 import pandas as pd
 import gsw
 from utils.interpolation import interpolation as itp
+import glob
+
 
 class interpolationGlorys2Roms(object):
     def __init__(self, fgrid, fpath, load=False):
@@ -242,6 +244,16 @@ if __name__ == '__main__':
         tref1 = date2num(tref, 'days since 1990-01-01 00:00:00')
 
 
+        output_file = output % str(tref).replace(' ','T')
+        
+        # if file is already saved continue to the next iteration
+        flist = glob.glob(output_file)
+        if len(flist)!= 0:
+            print(f'{flist[0]} already saved')
+            continue
+        else:
+            pass
+
         # glorys data in interpolation Glorys2Roms is read with xr.open_mfdataset. 
         # If using load kwarg, the script will run faster but RAM will be used more intesively
         # open_mfdataset may be slow depending on the size of the grid
@@ -308,8 +320,8 @@ if __name__ == '__main__':
         # dsgrid['time'].attrs['unit'] = 'day'
         # dsgrid['time'].attrs['cycle_length'] = np.array(12).astype(float)
 
-        dsgrid.to_netcdf(output % str(tref).replace(' ','T'))
-        print(output % str(tref).replace(' ','T') + ' saved')
+        dsgrid.to_netcdf(output_file)
+        print(output_file + ' saved')
 print('Done')
 
 
