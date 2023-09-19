@@ -48,8 +48,6 @@
                          "q1":  '/home/informatica/Documents/data/tides/tpxo9/TPXO9_atlas_v5_nc/u_q1_tpxo9_atlas_30_v5.nc',
                          "s2":  '/home/informatica/Documents/data/tides/tpxo9/TPXO9_atlas_v5_nc/u_s2_tpxo9_atlas_30_v5.nc',
                          "s1":  '/home/informatica/Documents/data/tides/tpxo9/TPXO9_atlas_v5_nc/u_s1_tpxo9_atlas_30_v5.nc'}},
-    'rename_dims'   : {'longitude':'lon','latitude':'lat','depth':'z'},
-    'rename_vars'   : {'thetao':'temp','so':'salt','depth':'z', 'uo':'u', 'vo':'v', 'zos':'zeta'},
     'varbs_rho'     : [ 'zeta', 'salt', 'temp', 'u', 'v'],
     'clim.date'     : [[2010,5,8,12],[2010,5,15,12],'1D'] ,
     'clim.src_file' : '/data0/dsasaki/data/glorys/swatl2022/2022_swatl_2010-05*nc',
