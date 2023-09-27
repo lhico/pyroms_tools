@@ -10,7 +10,7 @@ import glob
 import skfmm
 from netCDF4 import num2date,date2num
 import pandas as pd
-
+from datetime import datetime as dtt
 
 
 def compute_depth_layers(ds, hmin=0.1):
@@ -297,9 +297,12 @@ if __name__ == '__main__':
     # average grid spacing in degrees. this is used in the fast marching method
     # within extrapolation_nearest method if you boundaries are presenting null
     # values at ocean points this is value could be the culprit
-    dx          = dicts['bdry.dxdy']
+    dx            = dicts['bdry.dxdy']
     path_grid   = dicts['grid_dir']
     path_icfile = dicts['ic.ic_file']
+    bdry_interv = dicts['bdry.time_slice']
+    tstart, tfinal = bdry_interv
+
 
     # 1) read data
     nc_roms_grd   = xr.open_dataset(path_grid)   # roms grid
@@ -326,6 +329,12 @@ if __name__ == '__main__':
                                       combine='nested',
                                       decode_times=False)
 
+
+    # establishes initial and final time to slice nc_ini_src0
+    tstart_num = date2num(dtt.strptime(tstart, '%Y-%m-%d'), nc_ini_src0.time.units)
+    tfinal_num = date2num(dtt.strptime(tfinal, '%Y-%m-%d'), nc_ini_src0.time.units)
+
+    nc_ini_src0 = nc_ini_src0.sel(time=slice(tstart_num,tfinal_num))
 
     time0 = num2date(nc_ini_src0.time[0].values, nc_ini_src0.time.attrs['units'])
     tref = pd.date_range(start=str(time0), periods=nc_ini_src0.time.size, freq='1D')

@@ -8,6 +8,8 @@ from netCDF4 import date2num, num2date
 from scipy import ndimage
 import sys
 import os
+from datetime import datetime as dtt
+
 
 """
 This script preprocesses the era5 winds for roms
@@ -83,21 +85,30 @@ dicts = ut._get_dict_paths(f'{os.path.dirname(__file__)}/../configs/grid_config_
 # dicts resolver
 fpath_single   = dicts['frc.era.single']
 fpath_pressure = dicts['frc.era.press']
-time0          = dicts['frc.date'][0]
+timei          = dicts['frc.date'][0]
 timef          = dicts['frc.date'][1]
 dt             = dicts['frc.date'][2]
 odir           = dicts['frc.outputdir']
 
 
 # month = 5
-nc = xr.open_dataset(fpath_single, decode_times=False)
-nc1 = xr.open_dataset(fpath_pressure, decode_times=False)
+nc = xr.open_mfdataset(fpath_single, decode_times=False)
+nc1 = xr.open_mfdataset(fpath_pressure, decode_times=False)
 nc['q'] = nc1['q']
 sstK = True
 
 
-time0 = num2date(nc.time[0].values, nc.time.attrs['units'])
-tref = pd.date_range(start=str(time0), periods=nc.time.size, freq='1H')
+
+
+tstart_num = date2num(dtt.strptime(timei, '%Y-%m-%dT%H:%M:%S'), nc.time.units)
+tfinal_num = date2num(dtt.strptime(timef, '%Y-%m-%dT%H:%M:%S'), nc1.time.units)
+
+nc = nc.sel(time=slice(tstart_num, tfinal_num))
+nc1 = nc1.sel(time=slice(tstart_num, tfinal_num))
+
+
+# time0 = num2date(nc.time[0].values, nc.time.attrs['units'])
+tref = pd.date_range(start=timei, periods=nc.time.size, freq='1H')
 tref1 = date2num(tref.to_pydatetime(), 'days since 1990-01-01 00:00:00')
 
 
