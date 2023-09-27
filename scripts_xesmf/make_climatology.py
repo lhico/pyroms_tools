@@ -3,7 +3,7 @@ import xarray_decorators
 import numpy as np
 import xesmf as xe
 # from scipy import interpolate as itp
-import datetime as dtt
+from datetime import datetime as dtt
 from netCDF4 import date2num
 import sys
 from utils import utils as ut
@@ -14,10 +14,17 @@ import glob
 
 
 class interpolationGlorys2Roms(object):
-    def __init__(self, fgrid, fpath, load=False):
+    def __init__(self, fgrid, fpath, tslice=None, load=False):
         self.dsgrid   = xr.open_dataset(fgrid)
         self.dssource = xr.open_mfdataset(fpath)
         self.dssource  = self.dssource.drop_duplicates(dim='time')
+        if tslice is not None:
+            tstart=tslice[0]
+            tfinal =tslice[1]
+            tstart_num = dtt.strptime(tstart, '%Y-%m-%dT%H:%M:%S')
+            tfinal_num = dtt.strptime(tfinal, '%Y-%m-%dT%H:%M:%S')
+
+            self.dssource = self.dssource.sel(time=slice(tslice[0], tslice[1]))
 
         if load:
             self.dssource.load()
@@ -258,7 +265,8 @@ if __name__ == '__main__':
         # If using load kwarg, the script will run faster but RAM will be used more intesively
         # open_mfdataset may be slow depending on the size of the grid
         q = interpolationGlorys2Roms(grid,
-                                    source,
+                                    source
+                                    tslice=(tstart,tfinal),
                                     load=True)
         q.calculate_geostrophy()
         q.set_coords(tref, gtype='rho', time_type=None)
