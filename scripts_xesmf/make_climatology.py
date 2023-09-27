@@ -265,7 +265,7 @@ if __name__ == '__main__':
         # If using load kwarg, the script will run faster but RAM will be used more intesively
         # open_mfdataset may be slow depending on the size of the grid
         q = interpolationGlorys2Roms(grid,
-                                    source
+                                    source,
                                     tslice=(tstart,tfinal),
                                     load=True)
         q.calculate_geostrophy()
