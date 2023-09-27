@@ -119,7 +119,7 @@ class interpolationGlorys2Roms(object):
     def calculate_geostrophy(self):
         ds = self.dssource
         xm, ym = np.meshgrid(ds.latitude.values,
-                            ds.longitude.values,)
+                            ds.longitude.values,indexing='ij')
 
         f = gsw.f(ym)
         g = 9.8
