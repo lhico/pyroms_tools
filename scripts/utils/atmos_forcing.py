@@ -304,7 +304,7 @@ variables_list = {
         'ECMWFlongname': '2m_temperature',
         'Vname': 'Tair',
         'accumulation': False,
-        'outputName': 'Tair',
+        'outputName': 'temp',
         'scale': 1.0,
         'units': 'degC',
         'time': 'tair_time'

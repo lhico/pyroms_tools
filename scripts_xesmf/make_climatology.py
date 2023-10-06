@@ -329,6 +329,7 @@ if __name__ == '__main__':
         # dsgrid['time'].attrs['cycle_length'] = np.array(12).astype(float)
 
         dsgrid.to_netcdf(output_file)
+        dsgrid.close()
         print(output_file + ' saved')
 print('Done')
 

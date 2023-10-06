@@ -141,9 +141,9 @@ rhoa = air_density(nc['sp'], tv)
 dqdsst = dQdT(wspd,nc['sp'], nc['t2m'], rhoair=rhoa)
 nc['dQdSST']= dqdsst.dQdT().isel(level=0)
 
-ncout = nc[['mask', 'shflux', 'swflux', 'metss', 'mntss', 'dQdSST', 'sst','sp']]
+ncout = nc[['mask', 'shflux', 'swflux', 'metss', 'mntss', 'dQdSST', 'sst','sp','t2m']]
 
-for varname in ['sp','sst', 'metss', 'mntss', 'shflux', 'swflux', 'dQdSST']:
+for varname in ['sp','sst', 'metss', 'mntss', 'shflux', 'swflux', 'dQdSST', 't2m']:
     rename = metadata[varname]['outputName']
     var = extrapolating_era5(ncout, varname, None, 
                                 extrapolate_method='laplace', dst=ncout, mask=nc['mask'])
@@ -175,7 +175,7 @@ for varname in ['sp','sst', 'metss', 'mntss', 'shflux', 'swflux', 'dQdSST']:
     var.attrs['time'] = metadata[varname]['time']
     var.attrs['coordinates'] = 'lon lat'
 
-    if rename=='SST':
+    if (rename=='SST') or (rename=='temp'):
         var[rename].values -= 273.15
     # var = var.assign_coords(time=pd.date_range(start=ncout.time.values[0], freq='1H', periods=ncout.time.size))
     print(rename)

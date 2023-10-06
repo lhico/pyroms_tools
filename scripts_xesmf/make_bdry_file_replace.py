@@ -334,7 +334,8 @@ if __name__ == '__main__':
     tstart_num = date2num(dtt.strptime(tstart, '%Y-%m-%d'), nc_ini_src0.time.units)
     tfinal_num = date2num(dtt.strptime(tfinal, '%Y-%m-%d'), nc_ini_src0.time.units)
 
-    nc_ini_src0 = nc_ini_src0.sel(time=slice(tstart_num,tfinal_num))
+    # 23 below guarantees that the not online tfinal at 00Z is used 
+    nc_ini_src0 = nc_ini_src0.sel(time=slice(tstart_num,tfinal_num +23))
 
     time0 = num2date(nc_ini_src0.time[0].values, nc_ini_src0.time.attrs['units'])
     tref = pd.date_range(start=str(time0), periods=nc_ini_src0.time.size, freq='1D')
@@ -456,5 +457,6 @@ if __name__ == '__main__':
         nc_out1 = nc_out1.assign_coords(ocean_time=[tref1[i]])
         nc_out1['ocean_time'].attrs['units'] = 'days since 1990-01-01 00:00:00'
         nc_out1.to_netcdf(output_file)
+        nc_out1.close()
 
 
