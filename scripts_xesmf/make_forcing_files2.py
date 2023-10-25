@@ -127,7 +127,7 @@ nc['shflux'] = heat_flux(nc,
                         scale=1/3600)
 
 # -- fresh water fluxes -- #
-nc['swflux'] = net_freshwater(nc,
+nc['swflux'] = -net_freshwater(nc,
                             evaporation='e',
                             precipitation='tp',
                             scale=1e-3)

@@ -294,8 +294,8 @@ if __name__ == '__main__':
 
 
         # interpolate u and v onto rho grid (due to rotation)
-        v  = q.ds1['ug']
-        u  = q.ds1['vg']
+        v  = q.ds1['vg']
+        u  = q.ds1['ug']
 
         # rotating u and v as eta and xi coordinate components
         rot = dsgrid.angle.values
@@ -318,6 +318,12 @@ if __name__ == '__main__':
         dsgrid['ubar'] = (('time', 'eta_u', 'xi_u'), [ug[:,:-1]])
         dsgrid['vbar'] = (('time', 'eta_v', 'xi_v'), [vg[:-1,:]])
 
+
+        dsgrid['ubar'] = dsgrid['ubar'].bfill('xi_u')
+        dsgrid['ubar'] = dsgrid['ubar'].bfill('eta_u')
+        dsgrid['vbar'] = dsgrid['vbar'].bfill('xi_v')
+        dsgrid['vbar'] = dsgrid['vbar'].bfill('eta_v')
+        
 
         for v,c in zip(['temp', 'salt','v','u'],['rho','rho','v','u']):
             dsgrid = nearest_interpolation(dsgrid, v, hgrid=c)
