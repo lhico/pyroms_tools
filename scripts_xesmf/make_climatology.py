@@ -181,6 +181,8 @@ class interpolationGlorys2Roms(object):
         varb = varb.bfill('eta_rho')
         varb = varb.ffill('eta_rho')
 
+        varb = varb.bfill('depth')
+
         varb = varb.values[::-1]
 
         nzs = zs.shape[0]
@@ -323,7 +325,7 @@ if __name__ == '__main__':
         dsgrid['ubar'] = dsgrid['ubar'].bfill('eta_u')
         dsgrid['vbar'] = dsgrid['vbar'].bfill('xi_v')
         dsgrid['vbar'] = dsgrid['vbar'].bfill('eta_v')
-        
+
 
         for v,c in zip(['temp', 'salt','v','u'],['rho','rho','v','u']):
             dsgrid = nearest_interpolation(dsgrid, v, hgrid=c)

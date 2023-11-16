@@ -9,7 +9,7 @@ from scipy import ndimage
 import sys
 import os
 from datetime import datetime as dtt
-
+import glob
 
 """
 This script preprocesses the era5 winds for roms
@@ -112,6 +112,12 @@ tref = pd.date_range(start=timei, periods=nc.time.size, freq='1H')
 tref1 = date2num(tref.to_pydatetime(), 'days since 1990-01-01 00:00:00')
 
 
+# if file is already saved continue to the next iteration
+flist = glob.glob(odir)
+if len(flist)!= 0:
+    print(f'{flist[0]} already saved')
+    sys.exit(0) 
+
 
 metadata = variables_list
 
@@ -130,7 +136,7 @@ nc['shflux'] = heat_flux(nc,
 nc['swflux'] = -net_freshwater(nc,
                             evaporation='e',
                             precipitation='tp',
-                            scale=1e-3)
+                            scale=1e-3/3600)
 
 # -- surface net heat flux sensitivity to SST -- #
 wspd = (nc['u10']**2 + nc['u10']**2)**0.5
@@ -183,5 +189,5 @@ for varname in ['sp','sst', 'metss', 'mntss', 'shflux', 'swflux', 'dQdSST', 't2m
     var.to_netcdf(f'test_{rename}_{tref.year[0]}-{tref.month[0]:02d}.nc', format='NETCDF4')
 
 dsout = xr.open_mfdataset(f'test_*_{tref.year[0]}-{tref.month[0]:02d}.nc')
-dsout.to_netcdf(f'{odir}')
+dsout.to_netcdf(odir)
 os.system(f'rm test_*_{tref.year[0]}-{tref.month[0]:02d}.nc')

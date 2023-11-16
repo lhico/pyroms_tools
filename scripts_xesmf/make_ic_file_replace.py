@@ -10,6 +10,8 @@ import os, sys
 from scipy.spatial import cKDTree
 from netCDF4 import date2num, num2date
 import pandas as pd
+import datetime as dtt
+import glob
 
 
 def compute_depth_layers(ds, hmin=0.1):
@@ -269,27 +271,41 @@ if __name__ == '__main__':
     dicts = dicts[reference]
 
 
-    outfile = dicts['ic.output_file']        # output file name
-    rename_coords = dicts['rename_dims']  # renaming source file coordinates
-    rename_vars   = dicts['rename_vars']  # renaming sourfe file variables
-    varbs = dicts['varbs_rho']            # which variables will be interpolated
-    invert_depth = dicts['invert']
-    zdel = dicts['delete_idepths']
+    outfile       = dicts['ic.output_file']        # output file name
+    ic_start      = dicts['ic.date']             # which variables will be interpolated
+    rename_coords = dicts['rename_dims']           # renaming source file coordinates
+    rename_vars   = dicts['rename_vars']           # renaming sourfe file variables
+    varbs         = dicts['varbs_rho']             # which variables will be interpolated
+    invert_depth  = dicts['invert']
+    zdel          = dicts['delete_idepths']
     horizonta_homog_fields = dicts['ic.hor_homog']
 
     # 1) read data
     nc_roms_grd  = xr.open_dataset(dicts['grid_dir'])  # roms grid
-    nc_ini_src   = xr.open_dataset(dicts['ic.source_file'], decode_times=False)   # initial conditions sourec
+    nc_ini_src   = xr.open_mfdataset(dicts['ic.source_file'], decode_times=False, chunks={'time':1})   # initial conditions sourec
     nc_out0       = xr.open_dataset(dicts['ic.ic_file']) # target file (we will replace some of its variables)
     nc_out = nc_out0.copy()
 
+    ic_start = dtt.datetime.strptime(ic_start,'%Y-%m-%dT%H')
 
-    time0 = num2date(nc_ini_src.time[0].values, nc_ini_src.time.attrs['units'])
-    tref = pd.date_range(start=str(time0), periods=1, freq='1H')
+    # time0 = date2num(ic_start, nc_ini_src.time.attrs['units'])
+    tref = pd.date_range(start=str(ic_start), periods=1, freq='1H')
     tref1 = date2num(tref.to_pydatetime(), 'days since 1990-01-01 00:00:00')
 
     if len(nc_ini_src.dims) ==4:
-        nc_ini_src = nc_ini_src.isel(time=[0])
+        if ic_start is None:
+            nc_ini_src = nc_ini_src.isel(time=[0])
+        else:
+            nc_ini_src = nc_ini_src.sel(time=[tref1], method='nearest')
+
+    outfile = ic_start.strftime(outfile)
+
+    # if file is already saved continue to the next iteration
+    flist = glob.glob(outfile)
+    if len(flist)!= 0:
+        print(f'{flist[0]} already saved')
+        exit()
+
 
     ds_out = nc_roms_grd  #.rename({'lon_rho':'lon', 'lat_rho':'lat'})  # rename variables so xesmf understand them
 
@@ -340,7 +356,7 @@ if __name__ == '__main__':
             raise IOError("""time should be a coordinate. If there is a time coordinate with a different
             name, please rename it to 'time'""")
 
-
+        nc_ini_src[varb].load()
         if nc_ini_src[varb].values.ndim == 4:
             nc_ini_src[varb].values[0] = extrapolation_nearest(nc_ini_src.longitude.values,
                                                             nc_ini_src.latitude.values,
@@ -357,6 +373,12 @@ if __name__ == '__main__':
         else:
             raise IndexError('array should be either 3D or 4D')
         nc_out[varb].values = [var]
+
+        if nc_out[varb].ndim == 4:
+            aux = nc_out[varb].bfill(dim='s_rho')
+            aux.load()
+            nc_out[varb] = aux
+
 
     nc_out1 = rotate_vector_field(nc_out)
 
