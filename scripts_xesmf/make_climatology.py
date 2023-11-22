@@ -217,15 +217,16 @@ class interpolationGlorys2Roms(object):
     #     return outfield
 
 
-def nearest_interpolation(dsgrid, varb, hgrid='rho'):
-    dsgrid[varb] = dsgrid[varb].bfill('s_rho')
-    dsgrid[varb] = dsgrid[varb].ffill('s_rho')
+def nearest_interpolation(dsgrid, varb, hgrid='rho', barotropic=False):
+    if not barotropic:
+        dsgrid[varb] = dsgrid[varb].bfill('s_rho')
+        dsgrid[varb] = dsgrid[varb].ffill('s_rho')
+
     dsgrid[varb] = dsgrid[varb].ffill(f'xi_{hgrid}')
     dsgrid[varb] = dsgrid[varb].bfill(f'xi_{hgrid}')
     dsgrid[varb] = dsgrid[varb].ffill(f'eta_{hgrid}')
     dsgrid[varb] = dsgrid[varb].bfill(f'eta_{hgrid}')
     return dsgrid
-
 
 if __name__ == '__main__':
 
@@ -293,8 +294,6 @@ if __name__ == '__main__':
         u1 = -mag * np.sin(angle + rot)
         v1 = mag * np.cos(angle + rot)
 
-
-
         # interpolate u and v onto rho grid (due to rotation)
         v  = q.ds1['vg']
         u  = q.ds1['ug']
@@ -320,16 +319,17 @@ if __name__ == '__main__':
         dsgrid['ubar'] = (('time', 'eta_u', 'xi_u'), [ug[:,:-1]])
         dsgrid['vbar'] = (('time', 'eta_v', 'xi_v'), [vg[:-1,:]])
 
-
         dsgrid['ubar'] = dsgrid['ubar'].bfill('xi_u')
         dsgrid['ubar'] = dsgrid['ubar'].bfill('eta_u')
         dsgrid['vbar'] = dsgrid['vbar'].bfill('xi_v')
         dsgrid['vbar'] = dsgrid['vbar'].bfill('eta_v')
 
-
-        for v,c in zip(['temp', 'salt','v','u'],['rho','rho','v','u']):
-            dsgrid = nearest_interpolation(dsgrid, v, hgrid=c)
-
+        for v,c in zip(['temp', 'salt','v','u','vbar','ubar'],['rho','rho','v','u','v','u']):
+            if v in ['ubar', 'vbar']:
+                barotropic = True
+            else:
+                barotropic = False
+            dsgrid = nearest_interpolation(dsgrid, v, hgrid=c, barotropic=barotropic)
 
         dsgrid['time'].attrs = {}
         dsgrid['time'].attrs['long_name'] = 'time'
