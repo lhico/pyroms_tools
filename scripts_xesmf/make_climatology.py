@@ -339,6 +339,9 @@ if __name__ == '__main__':
         dsgrid.to_netcdf(output_file)
         dsgrid.close()
         print(output_file + ' saved')
+
+        del dsgrid,q,ug,vg,u,v
+
 print('Done')
 
 
