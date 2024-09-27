@@ -1,0 +1,18 @@
+ceresIV_2.012:
+  grid:
+    N: 40
+    theta_s: 6
+    theta_b: 2
+    Tcline: 100
+    grid: '/home/otel/Desktop/deletar/pyroms_tests/roms_grid01_2.012_smooth.nc'
+  gridid:
+    gridname: 'ceresIV_2.0'
+  ic:
+    starttime: '2019-08-01T12:00:00'
+    ic_template: '/home/otel/Desktop/deletar/pyroms_tests/ic_file.nc'
+    interp_varbs: ['zos', 'thetao', 'so', 'uo', 'vo']
+    map_varbs: {'zos':'zeta', 'thetao': 'temp', 'so': 'salt', 'uo': 'u', 'vo': 'v'}
+    interp_varbs2: ['so', 'thetao', 'zos', 'u', 'v']
+    source_file: '/home/otel/Desktop/deletar/pyroms_tests/2022_swatl_2010-06-26_00_00_00_2010-07-03_00_00_00.nc'
+    ic_file: '/home/otel/Desktop/deletar/pyroms_tests/roms_ic_2.012_empty.nc'
+    hor_homog: False
