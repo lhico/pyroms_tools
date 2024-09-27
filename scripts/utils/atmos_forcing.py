@@ -304,7 +304,7 @@ variables_list = {
         'ECMWFlongname': '2m_temperature',
         'Vname': 'Tair',
         'accumulation': False,
-        'outputName': 'Tair',
+        'outputName': 'temp',
         'scale': 1.0,
         'units': 'degC',
         'time': 'tair_time'
@@ -465,4 +465,13 @@ variables_list = {
         'units': 'W m-2 degC-1',
         'time': 'sst_time'
     },
+    'sp': {
+        'ECMWFlongname': '',
+        'Vname': 'Surface pressure',
+        'accumulation': False,
+        'outputName': 'Pair',
+        'scale': 1,
+        'units': 'mbar',
+        'time': 'pair_time'
+    }
 }

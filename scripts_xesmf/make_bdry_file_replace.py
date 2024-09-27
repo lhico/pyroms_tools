@@ -8,7 +8,9 @@ from utils import utils as ut
 from scipy.spatial import cKDTree
 import glob
 import skfmm
-
+from netCDF4 import num2date,date2num
+import pandas as pd
+from datetime import datetime as dtt
 
 
 def compute_depth_layers(ds, hmin=0.1):
@@ -279,7 +281,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         reference = sys.argv[1]
     else:
-        reference = 'pbs_202109_glorys'
+        reference = 'ceresIV_2.012'
 
 
     dicts = ut._get_dict_paths('../configs/grid_config_esmf.txt')
@@ -291,17 +293,16 @@ if __name__ == '__main__':
     varbs         = dicts['varbs_rho']            # which variables will be interpolated
     invert_depth  = dicts['invert']
     zdel          = dicts['delete_idepths']
-
-
-
     
     # average grid spacing in degrees. this is used in the fast marching method
     # within extrapolation_nearest method if you boundaries are presenting null
     # values at ocean points this is value could be the culprit
-    dx            = dicts['bdry.dxdy']  
-
+    dx            = dicts['bdry.dxdy']
     path_grid   = dicts['grid_dir']
     path_icfile = dicts['ic.ic_file']
+    bdry_interv = dicts['bdry.time_slice']
+    tstart, tfinal = bdry_interv
+
 
     # 1) read data
     nc_roms_grd   = xr.open_dataset(path_grid)   # roms grid
@@ -311,24 +312,49 @@ if __name__ == '__main__':
     # don't need to be filled at first, only the shape is necessary
     nc_aux0       = xr.open_mfdataset(path_icfile,
                                       concat_dim='ocean_time',
-                                      combine='nested') 
-    
+                                      combine='nested')
+
+
     # target file (boundary condition roms file)
     nc_out0       = xr.open_mfdataset(dicts['bdry.bdry_file'],
                                       concat_dim='ocean_time',
-                                      combine='nested')
+                                      combine='nested',
+                                      decode_times=False)
     ncaux         = nc_aux0.copy()
     outfile       = dicts['bdry.outfile']
 
     # auxilary file (initial condition roms file)
     nc_ini_src0   = xr.open_mfdataset(dicts['bdry.src_file'],
                                       concat_dim='time',
-                                      combine='nested')
+                                      combine='nested',
+                                      decode_times=False)
+
+
+    # establishes initial and final time to slice nc_ini_src0
+    tstart_num = date2num(dtt.strptime(tstart, '%Y-%m-%d'), nc_ini_src0.time.units)
+    tfinal_num = date2num(dtt.strptime(tfinal, '%Y-%m-%d'), nc_ini_src0.time.units)
+
+    # 23 below guarantees that the not online tfinal at 00Z is used 
+    nc_ini_src0 = nc_ini_src0.sel(time=slice(tstart_num,tfinal_num +23))
+
+    time0 = num2date(nc_ini_src0.time[0].values, nc_ini_src0.time.attrs['units'])
+    tref = pd.date_range(start=str(time0), periods=nc_ini_src0.time.size, freq='1D')
+    tref1 = date2num(tref.to_pydatetime(), 'days since 1990-01-01 00:00:00')
 
     dsaux = nc_roms_grd  # remanent of older versions
 
     # loop over time
     for i in range(nc_ini_src0.time.size):
+        output_file = outfile % (str(tref[i])[:19].replace(' ', 'T'))
+
+        # if file is already saved continue to the next iteration
+        flist = glob.glob(output_file)
+        if len(flist)!= 0:
+            print(f'{flist[0]} already saved')
+            continue
+        else:
+            pass
+
         nc_ini_src = nc_ini_src0.isel(time=[i])
 
         if glob.glob(outfile % (str(nc_ini_src.time.values[0])[:19])):
@@ -407,6 +433,12 @@ if __name__ == '__main__':
                 nc_out1[f'{varb}_south'].values = nc_aux1[varb].values[:,:,0,:]
                 nc_out1[f'{varb}_west'].values = nc_aux1[varb].values[:,:,:,0]
                 nc_out1[f'{varb}_east'].values = nc_aux1[varb].values[:,:,:,-1]
+
+                nc_out1[f'{varb}_east'] = nc_out1[f'{varb}_east'].bfill(dim='s_rho')
+                nc_out1[f'{varb}_west'] = nc_out1[f'{varb}_west'].bfill(dim='s_rho')
+                nc_out1[f'{varb}_north'] = nc_out1[f'{varb}_north'].bfill(dim='s_rho')
+                nc_out1[f'{varb}_south'] = nc_out1[f'{varb}_south'].bfill(dim='s_rho')
+    
             elif nc_aux1[varb].ndim == 3:
                 nc_out1[f'{varb}_north'].values = nc_aux1[varb].values[:,-1,:]
                 nc_out1[f'{varb}_south'].values = nc_aux1[varb].values[:,0,:]
@@ -420,7 +452,11 @@ if __name__ == '__main__':
             nc_out1[f'{varb}_east'].values = nc_aux1[varb].values[:,:,-1]
 
         
-        nc_out1 = nc_out1.assign_coords(ocean_time=nc_ini_src.time.values)
-        nc_out1.to_netcdf(outfile % (str(nc_ini_src.time.values[0])[:19]))
+
+        
+        nc_out1 = nc_out1.assign_coords(ocean_time=[tref1[i]])
+        nc_out1['ocean_time'].attrs['units'] = 'days since 1990-01-01 00:00:00'
+        nc_out1.to_netcdf(output_file)
+        nc_out1.close()
 
 

@@ -142,6 +142,6 @@ if __name__ == '__main__':
     nc.rx1.values[:-1,:-1] = rx1out 
 
     # fileout = osp.join(gdir, 'bacia_santos.nc')
-    fileout = outdir
+    fileout = output
     os.system(f'rm {fileout}')
     nc.to_netcdf(fileout)

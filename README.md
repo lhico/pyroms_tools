@@ -158,6 +158,11 @@ If you are using the nested scripts, please run the following line in `scripts/u
 f2py --verbose -c -m extrapolate fill.f90
 ```
 
+If you are using nudging scripts, please run the following line in `scripts/utils`:
+```
+f2py -c -m interpolation interpolation.f90
+```
+
 
 ### **2.1 Grids**
 
