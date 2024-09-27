@@ -1,0 +1,30 @@
+20210902_exp0
+    coarse to rec1:
+        ref_ratio=3;
+        Istr = 20;
+        Iend = 32;
+        Jstr = 98;
+        Jend = 111;
+    rect1 to rect2:
+        ref_ratio=5;
+        Istr = 10;
+        Iend = 24;
+        Jstr = 12;
+        Jend = 24;
+    commnets: matlab script only worked for the first nesting (haven't tried to make it work yet)
+20210904_exp1
+    coarse to rec1:
+        ref_ratio=3;
+        Istr = 20;
+        Iend = 32;
+        Jstr = 98;
+        Jend = 111;
+    rect1 to rect2:
+        ref_ratio=5;
+        Istr = 10;
+        Iend = 25;
+        Jstr = 10;
+        Jend = 24;
+    commnets: matlab script only worked for the first nesting (haven't tried to make it work yet)
+
+

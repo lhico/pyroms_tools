@@ -1,0 +1,11 @@
+#
+id      = pbs_202109_glorys
+name    = pbs_202109_glorys
+grdfile = /home/lhico/pyroms_tools/data/treated/roms_grid00.nc
+N       = 20
+grdtype = roms
+Vtrans  = 2
+theta_s = 4
+theta_b = 2
+Tcline  = 10
+#

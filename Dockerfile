@@ -24,31 +24,49 @@ WORKDIR /home/lhico/
 
 # Install miniconda to /miniconda
 RUN chmod a+rwx /home/lhico/ && cd /home/lhico/ &&\
-    curl -LO http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh &&\
-    bash Miniconda3-latest-Linux-x86_64.sh -p /home/lhico/miniconda3 -b &&\
-    rm Miniconda3-latest-Linux-x86_64.sh
+    curl -LO https://repo.anaconda.com/miniconda/Miniconda3-py37_4.12.0-Linux-x86_64.sh &&\
+    bash Miniconda3-py37_4.12.0-Linux-x86_64.sh -p /home/lhico/miniconda3 -b &&\
+    rm Miniconda3-py37_4.12.0-Linux-x86_64.sh
 
-ENV PATH=/home/lhico/miniconda3/bin:${PATH}
+ENV PATH="${PATH}:/home/lhico/miniconda3/bin"
 
 # clonning repository
-RUN cd /home/lhico/ && git clone https://github.com/hadfieldnz/pyroms-mgh pyroms3 &&\
-    cd pyroms3 &&\
-    conda update -y conda
+# RUN conda update -y conda
+# clonning repository
+RUN cd /home/lhico
+RUN git clone https://github.com/lhico/pyroms.git pyroms3
+WORKDIR /home/lhico/pyroms3
 
-RUN conda install -y python=3.7 \
-                     numpy \
-                     netcdf4 \
+# For an unknown reason, the removal of the following lines disturbs
+# the installation: some 'conda install' options fail
+# for comments see issue #2 in the repository 
+# RUN git checkout 7bd751756a435db3e2519414f9f361510c9b5bcb
+RUN conda create --name test python=3.7
+
+#-- changing to root privileges to avoid nosuid related error --#
+USER root
+
+RUN sudo rm /bin/sh && sudo ln -s /bin/bash /bin/sh
+RUN echo $PYTHONPATH
+
+
+
+RUN conda install -y python=3.7.7 \
+                     numpy=1.18 \
+                     netcdf4=1.5.6 \
                      matplotlib=3.2 \
-                     basemap \
-                     scipy \
-                     basemap-data-hires \
+                     basemap=1.2.0 \
+                     scipy=1.6.2 \
+                     basemap-data-hires=1.2.0 \
                      ipython \
-                     xarray
+                     xarray=0.20.1 \
+                     libgfortran-ng=7.3
 
 RUN conda install -y -c conda-forge \
                       pygridgen
 
 RUN conda install -y --channel https://conda.anaconda.org/conda-forge esmf
+
 
 # setting environment variables
 # PROJ_LIB is needed to run basemap on python
@@ -59,17 +77,23 @@ PYTHONPATH=/home/lhico/miniconda3/lib/python3.7/site-packages/:${PYTHONPATH} \
 CURDIR=/home/lhico/pyroms3 \
 SITE_PACKAGES=/home/lhico/miniconda3/lib/python3.7/site-packages
 
+SHELL ["conda", "run", "-n", "base", "/bin/bash", "-c"]
+# RUN which python
+
 # installing PyROMS and other packages, such as bathy_smoother and pyroms_toolbox
 # and dependencias (csa, nn, gridutils, gridgen, natgrid)
 RUN cd $CURDIR/pyroms && python setup.py build && python setup.py install &&\
 cp -r $CURDIR/pyroms/pyroms/* /home/lhico/miniconda3/lib/python3.7/site-packages/pyroms/ &&\
 cd $CURDIR/pyroms_toolbox && python setup.py build && python setup.py install &&\
-cd $CURDIR/bathy_smoother && python setup.py build && python setup.py install &&\
-cd $CURDIR/pyroms/external/nn && ./configure && sudo make install &&\
-cd $CURDIR/pyroms/external/csa && ./configure && sudo make install &&\
-cd $CURDIR/pyroms/external/gridutils && ./configure && sudo make && sudo make install &&\
-cd $CURDIR/pyroms/external/gridgen && ./configure && sudo make &&\
-      sudo make lib && sudo make shlib && sudo make install
+cd $CURDIR/bathy_smoother && python setup.py build && python setup.py install
+
+
+
+RUN cd $CURDIR/pyroms/external/nn && ./configure && sudo make install &&\
+    cd $CURDIR/pyroms/external/csa && ./configure && sudo make install &&\
+    cd $CURDIR/pyroms/external/gridutils && ./configure && sudo make && sudo make install &&\
+    cd $CURDIR/pyroms/external/gridgen && ./configure && sudo make &&\
+        sudo make lib && sudo make shlib && sudo make install
 #
 
 ENV PREFIX=/home/lhico/miniconda3
@@ -103,8 +127,14 @@ python setup.py install
 
 # lpsolve55 must be installed after bathy_smoother
 RUN conda install -y -c conda-forge lpsolve55
+RUN conda install -y -c conda-forge importlib_metadata
 
-ENV PYROMS_GRIDID_FILE=/home/lhico/data/gridid.txt
+# ENV PYROMS_GRIDID_FILE=/home/lhico/data/gridid.txt
+
+#-- assigning to use the lhico user when entering the container --#
+USER lhico
+
+WORKDIR /home/lhico
 
 ##------------ CHANGES BELOW --------------###
 # setting project's name
