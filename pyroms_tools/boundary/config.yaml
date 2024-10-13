@@ -1,0 +1,23 @@
+default:
+  grid:
+    N: 40
+    theta_s: 6
+    theta_b: 2
+    Tcline: 100
+    grid: '/home/otel/Desktop/deletar/pyroms_tests/roms_grid01_2.012_smooth.nc'
+  gridid:
+    gridname: 'default'
+  bndry:
+    source_file: '/home/otel/Desktop/deletar/pyroms_tests/2022_swatl_2010-06-26_00_00_00_2010-07-03_00_00_00.nc'
+    output_file: '/home/otel/Desktop/deletar/pyroms_tests/bdry'
+    bdry_template: '/home/otel/Desktop/deletar/pyroms_tests/empty_bdry_2.012.nc'
+    ic_file: '/home/otel/Desktop/deletar/pyroms_tests/ic_file_empty.nc'
+    startTime: '2019-08-01T12:00:00'
+    dxdy: 0.1
+    map_vars_rho: {'zos': 'zeta', 'thetao': 'temp', 'so': 'salt'}
+    map_vars: {'zos': 'zeta', 'thetao': 'temp', 'so': 'salt', 'uo': 'u', 'vo': 'v'}
+    time_slice: ['2010-06-01T12:00:00','2010-07-01T12:00:00']
+    rename_dims: {'longitude': 'lon', 'latitude': 'lat', 'depth': 'z'}
+    invert: True
+    delete_idepths: []
+    horizontal_homog_fields: False

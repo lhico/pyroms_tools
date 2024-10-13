@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyroms_tools"
+version = "0.1.0"
+description = "A package with Python and Fortran integration"
+authors = [
+    { name="Your Name", email="you@example.com" }
+]
+
+[tool.setuptools]
+packages = ["pyroms_tools",
+            "pyroms_tools.utils",
+            "pyroms_tools.grid",
+            "pyroms_tools.initial",
+            "pyroms_tools.boundary",
+            "pyroms_tools.atmos",
+            "pyroms_tools.nudging",
+            "pyroms_tools.tides",
+            "pyroms_tools.rivers",]
+
+[project.scripts]
+make_grid        = "pyroms_tools.grid.make_grid_:main"
+make_grid_smooth = "pyroms_tools.grid.make_grid_smooth:main"
+make_grid_prototype = "pyroms_tools.grid.make_grid_prototype:main"
+make_ic_template    = "pyroms_tools.initial.ic_file_template:main"
+make_ic_build       = "pyroms_tools.initial.ic_file_build:main"
+make_boundary_template    = "pyroms_tools.boundary.boundary_file_template:main"
+make_boundary_build       = "pyroms_tools.boundary.boundary_file_build:main"
