@@ -1,0 +1,51 @@
+default:
+  output_dir: /home/otel/Desktop/deletar/pyroms_tests
+  bathy_file: /mnt/34c919f6-6617-49de-a20f-05e4186230b9/Dropbox/trabalho_irado/2022/postdoc/202203_ceresIV/pyroms_tools_new/data/raw/gebco.nc
+  grid:
+    dxdy: 0.125
+    xoffset: 3.5
+    yoffset: 2
+    WESN: [-57, -45.4, -42, -17.5]
+    rot: -0.9
+    N: 40
+    theta_s: 6
+    theta_b: 2
+    Tcline: 100
+    grid: /home/otel/Desktop/deletar/pyroms_tests/roms_grid01_2.012.nc
+  smooth:
+    input: /home/otel/Desktop/deletar/pyroms_tests/roms_grid01_2.012.nc
+    output: /home/otel/Desktop/deletar/pyroms_tests/roms_grid01_2.012_smooth.nc
+    capdepth: 5000
+    smooth: 0.125
+    nested: False
+    inputaux: ''
+  grid:
+    N: 40
+    theta_s: 6
+    theta_b: 2
+    Tcline: 100
+    grid: '/home/otel/Desktop/deletar/pyroms_tests/roms_grid01_2.012_smooth.nc'
+  gridid:
+    gridname: 'default'
+  ic:
+    starttime: '2019-08-01T12:00:00'
+    ic_template: '/home/otel/Desktop/deletar/pyroms_tests/ic_file_empty.nc'
+    map_varbs: {'zos':'zeta', 'thetao': 'temp', 'so': 'salt', 'uo': 'u', 'vo': 'v'}
+    source_file: '/home/otel/Desktop/deletar/pyroms_tests/2022_swatl_2010-06-26_00_00_00_2010-07-03_00_00_00.nc'
+    ic_file: '/home/otel/Desktop/deletar/pyroms_tests/ic_file.nc'
+    hor_homog: False
+  bndry:
+    output_file: '/home/otel/Desktop/deletar/pyroms_tests/bdry'
+    bdry_template: '/home/otel/Desktop/deletar/pyroms_tests/empty_bdry_2.012.nc'
+    ic_file: '/home/otel/Desktop/deletar/pyroms_tests/ic_file_empty.nc'
+    startTime: '2019-08-01T12:00:00'
+    dxdy: 0.1
+    varbs_rho: ['zeta', 'temp', 'salt']
+    map_vars_rho: {'zos': 'zeta', 'thetao': 'temp', 'so': 'salt'}
+    map_vars: {'zos': 'zeta', 'thetao': 'temp', 'so': 'salt', 'uo': 'u', 'vo': 'v'}
+    source_file: '/home/otel/Desktop/deletar/pyroms_tests/2022_swatl_2010-06-26_00_00_00_2010-07-03_00_00_00.nc'
+    time_slice: ['2010-06-01T12:00:00','2010-07-01T12:00:00']
+    rename_dims: {'longitude': 'lon', 'latitude': 'lat', 'depth': 'z'}
+    invert: True
+    delete_idepths: []
+    horizontal_homog_fields: False
