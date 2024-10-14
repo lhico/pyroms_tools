@@ -22,18 +22,7 @@ def parse_args():
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description='Generate grid configuration for pyroms.')
     parser.add_argument('--config', type=str, help='Path to the YAML configuration file.')
-    parser.add_argument('--bathy_file', type=str, help='Bathymetry file path.', required=False)
-    parser.add_argument('--dxdy', type=float, help='Grid spacing.', required=False)
-    parser.add_argument('--wesn', type=float, nargs=4, metavar=('x0', 'x1', 'y0', 'y1'), help='Grid boundaries (WESN).', required=False)
-    parser.add_argument('--xoffset', type=float, help='X offset.', required=False)
-    parser.add_argument('--yoffset', type=float, help='Y offset.', required=False)
-    parser.add_argument('--rot', type=float, help='Grid rotation angle.', required=False)
-    parser.add_argument('--N', type=int, help='Number of vertical levels.', required=False)
-    parser.add_argument('--theta_s', type=float, help='Surface control parameter.', required=False)
-    parser.add_argument('--theta_b', type=float, help='Bottom control parameter.', required=False)
-    parser.add_argument('--Tcline', type=float, help='Thermocline depth.', required=False)
-    parser.add_argument('--gridout', type=str, help='Output grid file path.', required=False)
-    parser.add_argument('--reference', type=str, default='default', help='Reference key for the configuration.', required=False)
+
     return parser.parse_args()
 
 def load_config_from_yaml(yaml_file, reference):
@@ -61,13 +50,23 @@ def hgrid(lon_rho, lat_rho):
             coords = geom.exterior.coords.xy
             xa = np.array(coords[0], np.float32)
             ya = np.array(coords[1], np.float32)
+            xa, ya = hgrd.proj(xa, ya)
+            vv = np.zeros((xa.shape[0],2))
+            vv[:, 0] = xa
+            vv[:, 1] = ya
+            hgrd.mask_polygon(vv,mask_value=0)
             # Process xa and ya as needed
         elif isinstance(geom, MultiPolygon):
             for poly in geom.geoms:  # Use geom.geoms to iterate over polygons in MultiPolygon
                 coords = poly.exterior.coords.xy
                 xa = np.array(coords[0], np.float32)
                 ya = np.array(coords[1], np.float32)
-                # Process xa and ya as needed
+                xa, ya = hgrd.proj(xa, ya)
+
+                vv = np.zeros((xa.shape[0],2))
+                vv[:, 0] = xa
+                vv[:, 1] = ya
+                hgrd.mask_polygon(vv,mask_value=0)
 
     return hgrd, projection
 
@@ -117,22 +116,8 @@ def main():
     """Main function to generate the grid configuration."""
     args = parse_args()
     
-    if args.config:
-        dicts = load_config_from_yaml(args.config, args.reference)
-    else:
-        dicts = {
-            'bathy_file': args.bathy_file,
-            'grid.dxdy': args.dxdy,
-            'grid.WESN': args.wesn,
-            'grid.xoffset': args.xoffset,
-            'grid.yoffset': args.yoffset,
-            'grid.rot': args.rot,
-            'grid.N': args.N,
-            'grid.theta_s': args.theta_s,
-            'grid.theta_b': args.theta_b,
-            'grid.Tcline': args.Tcline,
-            'grid.grid': args.gridout
-        }
+    dicts = load_config_from_yaml(args.config, 'default')
+
     
     # Extract parameters from the configuration
     bfile = dicts['bathy_file']

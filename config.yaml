@@ -19,12 +19,6 @@ default:
     smooth: 0.125
     nested: False
     inputaux: ''
-  grid:
-    N: 40
-    theta_s: 6
-    theta_b: 2
-    Tcline: 100
-    grid: '/home/otel/Desktop/deletar/pyroms_tests/roms_grid01_2.012_smooth.nc'
   gridid:
     gridname: 'default'
   ic:
@@ -49,3 +43,35 @@ default:
     invert: True
     delete_idepths: []
     horizontal_homog_fields: False
+  nudg:
+    east:
+      nudge: true
+      factor: 1
+      width: 30
+      transition: 'linear_nocoast'
+    west:
+      nudge: false
+      factor: 1
+      width: 30
+      transition: 'linear_nocoast'
+    north:
+      nudge: true
+      factor: 1
+      width: 30
+      transition: 'linear_nocoast'
+    south:
+      nudge: true
+      factor: 1
+      width: 30
+      transition: 'linear_nocoast'
+    tracertscale:
+      M2: 7
+      M3: 7
+      temp: 7
+      salt: 7
+      tracer: 7
+    output: '/home/otel/Desktop/deletar/pyroms_tests/roms_nudg.nc'
+  clim:
+    date: ['2010-06-26T00:00:00', '2010-07-03T00:00:00', '1D']
+    src_file: '/home/otel/Desktop/deletar/pyroms_tests/2022_swatl_2010-06-*.nc'
+    outfile: '/home/otel/Desktop/deletar/pyroms_tests/clim_%s.nc'
