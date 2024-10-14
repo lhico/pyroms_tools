@@ -7,3 +7,5 @@ data/*
 **/scripts/utils/*.c
 **/scripts/utils/*.so
 **/__pycache__
+pyroms_tools.egg-info
+build

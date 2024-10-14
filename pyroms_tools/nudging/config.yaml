@@ -1,0 +1,42 @@
+default:
+  grid:
+    WESN: [-57, -45.4, -44, -17.5]
+    rot: -0.9
+    N: 40
+    theta_s: 6
+    theta_b: 2
+    Tcline: 100
+    grid: '/home/lhico/pyroms_tools/data/treated_2.012/roms_grid01_2.012_smooth.nc'
+    output: '/home/lhico/pyroms_tools/data/treated_2.012/roms_grid00_2.012.nc'
+  nudg:
+    east:
+      nudge: true
+      factor: 1
+      width: 30
+      transition: 'linear_nocoast'
+    west:
+      nudge: false
+      factor: 1
+      width: 30
+      transition: 'linear_nocoast'
+    north:
+      nudge: true
+      factor: 1
+      width: 30
+      transition: 'linear_nocoast'
+    south:
+      nudge: true
+      factor: 1
+      width: 30
+      transition: 'linear_nocoast'
+    tracertscale:
+      M2: 7
+      M3: 7
+      temp: 7
+      salt: 7
+      tracer: 7
+    output: '/home/lhico/pyroms_tools/data/treated_2.012/roms_nudg_2.012.nc'
+clim:
+  date: ['2010-05-08T12:00:00', '2010-05-31T12:00:00', '1D']
+  src_file: '/data0/dsasaki/data/glorys/swatl2022/2022_swatl_2010-05*nc'
+  outfile: '/home/dsasaki/Documents/2023/pyroms_tools_newgrid/data/treated_2.012/clim_%s.nc'

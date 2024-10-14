@@ -1,51 +1,53 @@
-from utils import utils as ut
-import pyroms
-from utils import remap
-from utils import utils as ut
-# from utils import configs
-import subprocess
-import os, sys
-import os.path as osp
-
+import argparse
+import yaml
+from pyroms_tools.utils import utils as ut
+import os
+import sys
 
 os.environ["PYROMS_GRIDID_FILE"] = "gridid.txt"
 
-# -- gets  the information from the config file -- #
-# getting the referemce domain from shell 
-if len(sys.argv) > 1:
-    reference = sys.argv[1]
-else:
-    reference = 'pbs_202109_glorys'
+def load_config(config_path):
+    with open(config_path, 'r') as file:
+        return yaml.safe_load(file)
 
-dicts = ut._get_dict_paths('../configs/grid_config_pyroms.txt')
-dicts = dicts[reference]
+def create_grid_file(dicts):
+    gridfile = dicts['grid']['grid']
+    romsgridname = dicts['gridid']['gridname']
+    ut.create_grid_file(
+        romsgridname,
+        romsgridname,
+        gridfile,
+        dicts['grid']['N'],
+        'roms',
+        2,
+        dicts['grid']['theta_s'],
+        dicts['grid']['theta_b'],
+        dicts['grid']['Tcline']
+    )
 
-gridfile      = dicts['grid.grid']
-romsgridname  = dicts['gridid.gridname']
-output        = dicts['nudg.output']
+def apply_nudging(dicts):
+    romsgridname = dicts['gridid']['gridname']
+    output = dicts['nudg']['output']
+    onudg = ut.nudgcoef(romsgridname)
 
-# create a gridid.txt (this is a legacy)
-# pyroms uses the nc in the variable gridfile
-ut.create_grid_file(
-    romsgridname,
-    romsgridname,
-    gridfile,
-    dicts['grid.N'],
-    'roms',
-    2,
-    dicts['grid.theta_s'],
-    dicts['grid.theta_b'],
-    dicts['grid.Tcline']
-)
+    east = dicts['nudg']['east']
+    west = dicts['nudg']['west']
+    north = dicts['nudg']['north']
+    south = dicts['nudg']['south']
+    tracer_timescales = dicts['nudg']['tracertscale']
 
-onudg = ut.nudgcoef(romsgridname)
+    onudg(east, west, north, south, tracer_timescales, foutname=output)
 
+def main():
+    parser = argparse.ArgumentParser(description='Process nudging configuration.')
+    parser.add_argument('--config', type=str, required=True, help='Path to the config YAML file')
+    args = parser.parse_args()
 
-# strong restoring
-east   = dicts['nudg.east']
-west   = dicts['nudg.west']
-north  = dicts['nudg.north']
-south  = dicts['nudg.south']
+    config = load_config(args.config)
+    dicts = config['default']
 
-tracer_timescales = dicts['nudg.tracertscale']
-onudg(east,west,north,south,tracer_timescales,foutname=output)
+    create_grid_file(dicts)
+    apply_nudging(dicts)
+
+if __name__ == "__main__":
+    main()

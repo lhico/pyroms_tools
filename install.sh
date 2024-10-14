@@ -4,6 +4,7 @@ micromamba install -c conda-forge dask netCDF4 ipython
 micromamba install -c conda-forge esmpy xarray numpy shapely cf_xarray sparse numba bottleneck
 micromamba install -c conda-forge xesmf
 micromamba install -c conda-forge scikit-fmm pyproj tqdm
+micromamba install -c conda-forge gsw
 
 # pyroms installation
 git clone https://github.com/lhico/pyroms
