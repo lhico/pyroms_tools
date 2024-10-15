@@ -138,7 +138,7 @@ def main():
 
     mask0 = mask.copy()
     h1 = bathy_smoothing.smoothing_PlusMinus_rx0(mask, h1, smooth,
-            np.gradient(nc.x_rho)[0] * np.gradient(nc.y_rho)[0])
+            np.gradient(nc.x_rho)[1] * np.gradient(nc.y_rho)[0])
 
     nc.h.values = h1[0]
     nc.hraw.values[0] = h1[0]
