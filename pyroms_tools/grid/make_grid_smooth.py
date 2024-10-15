@@ -131,6 +131,8 @@ def main():
     rx1in = calculate_rx1(nc, '# -- original rx1 values -- #')
 
     h = nc.h.values.copy()
+    h0 = nc.h.values.copy()
+    
     h[h < -capdepth] = -capdepth
     h[h > capdepth] = capdepth
 
@@ -151,7 +153,7 @@ def main():
     nc['rx1'] = nc.h.copy()*0
     nc.rx1.values[:-1, :-1] = rx1out
 
-    nc['smooth_diff'] = nc['hraw'] - nc['h']
+    nc['smooth_diff'] = h0 - nc['h']
 
     fileout = output
     if osp.exists(fileout):

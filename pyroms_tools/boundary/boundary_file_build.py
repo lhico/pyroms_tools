@@ -68,7 +68,7 @@ def interpolation(fpath, nc_roms_grd, source_grid, target_grid, gridtype='rho'):
     ind = np.where(mask != 0)
 
     for j, i in zip(ind[0], ind[1]):
-        f = interpolate.interp1d(-interpolated.z.values, interpolated[:, j, i].values,
+        f = interpolate.interp1d(-interpolated['depth'].values, interpolated[:, j, i].values,
                                  bounds_error=False, fill_value='extrapolate', kind='slinear')
         interpvarb[:, j, i] = f(z[:, j, i])
     
@@ -195,22 +195,22 @@ def slice_time(nc_ini_src_, tstart, tfinal):
     tfinal_num = date2num(dtt.strptime(tfinal, '%Y-%m-%dT%H:%M:%S'), nc_ini_src_.time.units)
     return nc_ini_src_.sel(time=slice(tstart_num, tfinal_num + 23))
 
-def interpolate_and_rotate(nc_ini_src, nc_aux0, dsaux, varbs, dx, dicts, nc_roms_grd):
+def interpolate_and_rotate(source_nc, boundary_target_grid, roms_grid, varbs, dx, gfpath, nc_roms_grd):
     for varb in varbs:
         gtype = 'rho' if varb not in ['u', 'v'] else varb
-        if nc_ini_src[varb].values.ndim == 4:
-            nc_ini_src[varb].values[0] = extrapolation_nearest(nc_ini_src.longitude.values,
-                                                               nc_ini_src.latitude.values,
-                                                               nc_ini_src[varb].values[0], dx)
-            var = interpolation(dicts['grid']['grid'], nc_roms_grd, nc_ini_src[varb][0], dsaux, gridtype=gtype)
-            nc_aux0[varb].values = [var]
-        elif nc_ini_src[varb].values.ndim == 3:
-            nc_ini_src[varb].values = extrapolation_nearest(nc_ini_src.longitude.values,
-                                                            nc_ini_src.latitude.values,
-                                                            nc_ini_src[varb].values, dx)
-            var = interpolation2d(dicts['grid']['grid'], nc_roms_grd, nc_ini_src[varb], dsaux, gridtype=gtype).squeeze()
-            nc_aux0[varb].values = [var]
-    nc_aux1 = rotate_vector_field(nc_aux0)
+        if source_nc[varb].values.ndim == 4:
+            source_nc[varb].values[0] = extrapolation_nearest(source_nc.longitude.values,
+                                                               source_nc.latitude.values,
+                                                               source_nc[varb].values[0], dx)
+            var = interpolation(gfpath, nc_roms_grd, source_nc[varb][0], roms_grid, gridtype=gtype)
+            boundary_target_grid[varb].values = [var]
+        elif source_nc[varb].values.ndim == 3:
+            source_nc[varb].values = extrapolation_nearest(source_nc.longitude.values,
+                                                            source_nc.latitude.values,
+                                                            source_nc[varb].values, dx)
+            var = interpolation2d(gfpath, nc_roms_grd, source_nc[varb], roms_grid, gridtype=gtype).squeeze()
+            boundary_target_grid[varb].values = [var]
+    nc_aux1 = rotate_vector_field(boundary_target_grid)
     nc_aux1.ubar.values[:] = ((nc_aux1.u * nc_aux1.s_rho).sum(dim='s_rho') / nc_aux1.s_rho.sum()).values
     nc_aux1.vbar.values[:] = ((nc_aux1.v * nc_aux1.s_rho).sum(dim='s_rho') / nc_aux1.s_rho.sum()).values
     return nc_aux1
@@ -237,6 +237,10 @@ def copy_boundary_values(nc_aux1, nc_out1, varbs):
                                                     nc_aux1[varb].values[:, :, 0] if direction == 'west' else \
                                                     nc_aux1[varb].values[:, :, -1]
 
+def assert_dict_values(dictionary, valid_values):
+    for value in dictionary.values():
+        assert value in valid_values, f"Value '{value}' is not in the list of valid values: {valid_values}"
+
 def main():
     parser = argparse.ArgumentParser(description='Process boundary conditions.')
     parser.add_argument('--config', type=str, required=True, help='Path to the YAML configuration file')
@@ -250,53 +254,62 @@ def main():
 
     outfile = dicts['bndry']['output_file']
     rename_coords = dicts['bndry']['rename_dims']
-    rename_vars = dicts['bndry']['map_vars']
-    map_varbs = dicts['bndry']['map_vars_rho']
-    invert_depth = dicts['bndry']['invert']
+    rename_vars = dicts['bndry']['rename_vars']
+    rename_vars = dicts['bndry']['rename_vars_rho']
+    invert_depth = dicts['bndry']['invert_depth']
     zdel = dicts['bndry']['delete_idepths']
     dx = dicts['bndry']['dxdy']
     horizontal_homog_fields = dicts['bndry']['horizontal_homog_fields']
     tstart, tfinal = dicts['bndry']['time_slice']
-
-    nc_roms_grd = xr.open_dataset(dicts['grid']['grid'])
-    nc_aux0 = xr.open_mfdataset(dicts['bndry']['ic_file'], concat_dim='ocean_time', combine='nested')
+    gridpath = dicts['grid']['grid']
+    
+    nc_roms_grd = xr.open_dataset(gridpath)
+    boundary_target_grid = xr.open_mfdataset(dicts['bndry']['ic_file'], concat_dim='ocean_time', combine='nested')
     nc_out0 = xr.open_mfdataset(dicts['bndry']['bdry_template'], concat_dim='ocean_time', combine='nested', decode_times=False)
-    nc_ini_src_ = xr.open_mfdataset(dicts['bndry']['source_file'], concat_dim='time', combine='nested', decode_times=False)
+    sources_nc_ = xr.open_mfdataset(dicts['bndry']['source_file'], concat_dim='time', combine='nested', decode_times=False)
+    
 
-    nc_ini_src0 = slice_time(nc_ini_src_, tstart, tfinal)
+    # assert that source file has the correct variables and dimensions
+    assert_dict_values(rename_vars, ['zeta', 'temp', 'salt', 'u', 'v'])
+    assert_dict_values(rename_coords, ['time', 'depth', 'lat', 'lon'])
+    sources_nc_ = sources_nc_.rename_dims(rename_coords).rename_vars(rename_vars)
+    print(sources_nc_)
+    # selecting time period 
+    sources_nc0 = slice_time(sources_nc_, tstart, tfinal)
 
-    time0 = num2date(nc_ini_src0.time[0].values, nc_ini_src0.time.attrs['units'])
-    tref = pd.date_range(start=str(time0), periods=nc_ini_src0.time.size, freq='1D')
+    time0 = num2date(sources_nc0.time[0].values, sources_nc0.time.attrs['units'])
+    tref = pd.date_range(start=str(time0), periods=sources_nc0.time.size, freq='1D')
     tref1 = date2num(tref.to_pydatetime(), 'days since 1990-01-01 00:00:00')
 
-    dsaux = nc_roms_grd
+    roms_grid = nc_roms_grd
 
-    for i in range(nc_ini_src0.time.size):
+    for i in range(sources_nc0.time.size):
         output_file = generate_output_file(outfile, tref, i)
         if glob.glob(output_file):
             print(f'{output_file} already saved')
             continue
 
-        # nc_ini_src = nc_ini_src0.isel(time=[i])
-        # if glob.glob(outfile % (str(nc_ini_src.time.values[0])[:19])):
-        #     print(f'{outfile % (str(nc_ini_src.time.values[0])[:19])} already saved')
-        #     continue
+        source_nc = sources_nc0.isel(time=[i])
+        if glob.glob(outfile % (str(source_nc.time.values[0])[:19])):
+            print(f'{outfile % (str(source_nc.time.values[0])[:19])} already saved')
+            continue
 
         nc_out1 = nc_out0.copy()
-        nc_ini_src = nc_ini_src0.isel(time=[i]).rename_dims(rename_coords).rename_vars(rename_vars)
-        nc_ini_src.load()
-        if horizontal_homog_fields:        
+        source_nc = sources_nc0.isel(time=[i])
+        source_nc.load()
 
-            nc = nc_ini_src.mean(dim=['lon', 'lat'])
-            for var in map_varbs.values():
-                nc_ini_src[var].values[:] = nc[var].values[:, None, None]
+
+        if horizontal_homog_fields:        
+            nc = source_nc.mean(dim=['lon', 'lat'])
+            for var in rename_vars.values():
+                source_nc[var].values[:] = nc[var].values[:, None, None]
             outfile = outfile[:-3] + '_hor_homog.nc'
 
-        zsel = np.delete(np.arange(nc_ini_src.depth.values.size), zdel)
-        nc_ini_src_ = nc_ini_src.isel(z=zsel)
+        zsel = np.delete(np.arange(source_nc.depth.values.size), zdel)
+        source_nc_ = source_nc.isel(depth=zsel)
 
-        nc_aux1 = interpolate_and_rotate(nc_ini_src_, nc_aux0, dsaux, map_varbs.values(), dx, dicts, nc_roms_grd)
-        copy_boundary_values(nc_aux1, nc_out1, map_varbs.values())
+        nc_aux1 = interpolate_and_rotate(source_nc_, boundary_target_grid, roms_grid, rename_vars.values(), dx, gridpath, nc_roms_grd)
+        copy_boundary_values(nc_aux1, nc_out1, rename_vars.values())
 
         nc_out1 = nc_out1.assign_coords(ocean_time=[tref1[i]])
         nc_out1['ocean_time'].attrs['units'] = 'days since 1990-01-01 00:00:00'
