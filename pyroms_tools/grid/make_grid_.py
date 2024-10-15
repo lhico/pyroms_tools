@@ -13,7 +13,7 @@ import cartopy.crs as ccrs
 import logging
 from pyproj import Proj
 from shapely.geometry import Polygon, MultiPolygon
-
+import xesmf as xe
 
 # Constants
 HMIN = 5
@@ -81,6 +81,41 @@ def h_bathymetry(topo, lon, lat, hgrd):
     RoughMat = bathy_tools.RoughnessMatrix(h, hgrd.mask_rho)
     logging.info(f'Max Roughness value is: {RoughMat.max()}')
     return h, hraw
+
+
+# TODO test this implementation
+# TODO make sure lon lat are 2D arrays
+def h_bathymetry2(topo, lon, lat, hgrd):
+    # Step 1: Create source grid
+
+    # Step 2: Create an xarray.Dataset
+    aux = xr.Dataset(
+        {"topo": (["y", "x"], topo)},
+        coords={
+            "lon": (["y", "x"], lon),
+            "lat": (["y", "x"], lat)}
+        )
+
+    # Step 2: Create destination grid
+    destination_grid = {
+        'lon': hgrd.lon_rho,
+        'lat': hgrd.lat_rho
+    }
+
+    # Step 3: Initialize the Regridder
+    regridder = xe.Regridder(aux, destination_grid, method='bilinear')
+
+    # Step 4: Perform the regridding
+    h = regridder(aux)
+
+    h1 = np.where(h.topo.values < HMIN, HMIN, h.topo.values)
+    idx = np.where(hgrd.mask_rho == 0)
+    h1[idx] = HMIN
+    hraw = h1.copy()
+    RoughMat = bathy_tools.RoughnessMatrix(h1, hgrd.mask_rho)
+    logging.info(f'Max Roughness value is: {RoughMat.max()}')
+    return h1, hraw
+
 
 def rotate_coords(xm, ym, ang_rot, degrees=False):
     """Rotate coordinates by a given angle."""
