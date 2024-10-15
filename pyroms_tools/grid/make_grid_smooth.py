@@ -122,6 +122,7 @@ def main():
         sys.exit(1)
     
     nc = nc0.copy()
+    nc.load()
     nc = nc.fillna(capdepth)
     nc.mask_rho.values[np.isnan(nc.h.values)] = 0
     nc = update_mask(nc)
@@ -147,8 +148,10 @@ def main():
 
     rx1out = calculate_rx1(nc, '# -- modified rx1 values -- #')
 
-    nc['rx1'] = nc.h.copy()
-    nc.rx1.values[:-1, :-1] = rx1out 
+    nc['rx1'] = nc.h.copy()*0
+    nc.rx1.values[:-1, :-1] = rx1out
+
+    nc['smooth_diff'] = nc['hraw'] - nc['h']
 
     fileout = output
     if osp.exists(fileout):
