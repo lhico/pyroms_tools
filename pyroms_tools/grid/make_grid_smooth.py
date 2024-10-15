@@ -121,17 +121,6 @@ def main():
         logging.error(f"Error opening input dataset: {e}")
         sys.exit(1)
     
-    if nested_grid:
-        try:
-            ncaux = xr.open_dataset(inputaux) 
-            nc0.load()
-            for i in ['theta_s', 'theta_b', 'hc', 'Cs_r', 'Cs_w', 'Tcline']:
-                nc0[i].values = ncaux[i].values
-            nc0.assign_coords(s_rho=ncaux.s_rho)
-        except Exception as e:
-            logging.error(f"Error opening auxiliary dataset: {e}")
-            sys.exit(1)
-    
     nc = nc0.copy()
     nc = nc.fillna(capdepth)
     nc.mask_rho.values[np.isnan(nc.h.values)] = 0
