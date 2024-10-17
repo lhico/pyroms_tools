@@ -65,7 +65,7 @@ def mask_sst(ds):
     condition = ~np.isnan(mask.isel(time=0))
     return xr.where(condition, 0, 1)
 
-def net_freshwater(ds, dicts, scale=1):
+def net_freshwater(ds, scale=1):
     """
     Calculate the net freshwater flux from various components in the dataset.
 
@@ -77,11 +77,11 @@ def net_freshwater(ds, dicts, scale=1):
                         - 'evaporation'
                         - 'total_precipitation' 
     """
-    evaporation = dicts['evaporation']
-    precipitation = dicts['total_precipitation']
-    return (ds[evaporation] + ds[precipitation]) * scale
+    evaporation = ds['evaporation']
+    precipitation = ds['total_precipitation']
+    return (evaporation + precipitation) * scale
 
-def heat_flux(ds, dicts, scale=1):
+def heat_flux(ds, scale=1):
     """
     Calculate the total heat flux from various components in the dataset.
 
@@ -99,12 +99,12 @@ def heat_flux(ds, dicts, scale=1):
     Returns:
     xarray.DataArray: The total heat flux.
     """
-    qs = dicts['surface_sensible_heat_flux']
-    ql = dicts['surface_latent_heat_flux']
-    snsr = dicts['surface_net_solar_radiation']
-    sntr = dicts['surface_net_thermal_radiation']
+    qs = ds['surface_sensible_heat_flux']
+    ql = ds['surface_latent_heat_flux']
+    snsr = ds['surface_net_solar_radiation']
+    sntr = ds['surface_net_thermal_radiation']
 
-    return (ds[qs] + ds[ql] + ds[snsr] + ds[sntr]) * scale   
+    return (qs + ql + snsr + sntr) * scale   
 
 
 def select_time_range(nc, timei, timef):
@@ -130,17 +130,17 @@ def compute_dQSST(nc):
     nc['dQdSST'] = dqdsst.dQdT()#.isel(level=0)
     return nc
 
-def process_variable(varname, ncout, tref1, metadata):
+def process_variable(varname, ncout, tref1, metadata,mask):
     rename = metadata[varname]['outputName']
     var = ncout[[varname]]
-    var = af.extrapolating_era5(ncout, varname, None, extrapolate_method='laplace', dst=ncout, mask=ncout['mask'])
+    var = af.extrapolating_era5(ncout, varname, None, extrapolate_method='laplace', dst=ncout, mask=mask)
     
-    # if varname == 'sp':
-    #     aux = af.extrapolating_era5(ncout, varname, None, extrapolate_method='xesmf', dst=ncout, mask=abs(ncout['mask'] - 2 + 1))
-    #     var.sp.values = aux.sp.values
-    #     var['sp'] = var['sp'].fillna(var.sp.mean().values)
-    #     aux = ndimage.gaussian_filter(var.sp.values, 1)
-    #     var.sp.values = aux
+    if varname == 'sp':
+        aux = af.extrapolating_era5(ncout, varname, None, extrapolate_method='xesmf', dst=ncout, mask=abs(ncout['mask'] - 2 + 1))
+        var.sp.values = aux.sp.values
+        var['sp'] = var['sp'].fillna(var.sp.mean().values)
+        aux = ndimage.gaussian_filter(var.sp.values, 1)
+        var.sp.values = aux
 
     var = var.reindex(lat=list(reversed(var.lat.values)))
     var = var.rename_vars({varname: rename,})
@@ -234,9 +234,10 @@ if __name__ == '__main__':
 
     # Load datasets
     fpath = glob.glob(fpath_single)
-    nc = xr.open_mfdataset(fpath[:5],combine='by_coords', compat='override', decode_times=False)
-    nc2 = xr.open_mfdataset(fpath[5:],combine='by_coords', compat='override', decode_times=False)
-    nc = xr.merge([nc, nc2])
+    nc = [xr.open_dataset(f, decode_times=False) for f in fpath]
+    # nc2 = xr.open_mfdataset(fpath[5:9],combine='by_coords', compat='override', decode_times=False)
+    # nc3 = xr.open_mfdataset(fpath[10:],combine='by_coords', compat='override', decode_times=False)
+    nc = xr.merge(nc)
 
     # standardizing coordinate names to time, lat, lon
     aux = switched_dict_items_keys(era_rename_coords)
@@ -259,8 +260,8 @@ if __name__ == '__main__':
 
 
     # Compute fluxes
-    nc['shflux'] = nc.total_precipitation *0# heat_flux(nc, scale=1 / 3600) # heat flux
-    nc['swflux'] = nc.total_precipitation*0#-net_freshwater(nc, scale=1e-3 / 3600)
+    nc['shflux'] = heat_flux(nc, scale=1 / 3600) # heat flux
+    nc['swflux'] = -net_freshwater(nc, scale=1e-3 / 3600)
 
     nc['mask'] = mask_sst(nc) #create a land/water mask
     # Compute sensitivity
@@ -272,7 +273,7 @@ if __name__ == '__main__':
     standard_dict_switched = switched_dict_items_keys(standard_dict)
     #creating a list that will be used in the data processing
     standard_list = [f for f in standard_dict_switched]
-    standard_list.append('mask')
+    # standard_list.append('mask')
     standard_list.append('dQdSST')
     standard_list.append('shflux')
     standard_list.append('swflux')
@@ -280,17 +281,20 @@ if __name__ == '__main__':
 
 
     # Process each variable and save to netCDF
+    # WARNING: notice that af.variables_list contain the actual
+    # naming conventions that will be used in the final output
     for varname in standard_list:
         if glob.glob(f'test_{varname}_{tref.year[0]}-{tref.month[0]:02d}.nc'):
             print(f'{varname} already saved')
             continue
-        var = process_variable(varname, ncout, tref1, af.variables_list)
+        var = process_variable(varname, ncout, tref1, af.variables_list, nc['mask'])
         var.to_netcdf(f'test_{varname}_{tref.year[0]}-{tref.month[0]:02d}.nc', format='NETCDF4')
 
     # Save the final output
-    dsout = xr.open_mfdataset(f'test_*_{tref.year[0]}-{tref.month[0]:02d}.nc')
-    dsout.to_netcdf(odir)
-    os.system(f'rm test_*_{tref.year[0]}-{tref.month[0]:02d}.nc')
+    dsout = xr.open_mfdataset(f'test_*_{tref.year[0]}-{tref.month[0]:02d}.nc', compat='override')
+    dsout.drop_vars('step').to_netcdf(odir)
+    # dsout
+    # os.system(f'rm test_*_{tref.year[0]}-{tref.month[0]:02d}.nc')
 
 # # if __name__ == "__main__":
 
