@@ -1,0 +1,25 @@
+default:
+  era:
+    press: '/home/otel/Desktop/deletar/nwa25_roms/source/ERA5_sp*.nc'
+    single: '/home/otel/Desktop/deletar/nwa25_roms/source/ERA5_*.nc'
+    outputdir: '/home/otel/Desktop/deletar/nwa25_roms/source/processed'
+    date: ['1993-01-01T00:00:00', '1993-02-01T00:00:00','1M']
+    fields:
+      10m_u_component_of_wind       : 'u10'  # used in dQdSST
+      10m_v_component_of_wind       : 'v10'  # used in dQdSST
+      2m_temperature                : 't2m'  # used in dQdSST/air_density
+      sea_level_pressure            : 'sp'   # used in dQdSST/air_density
+      sea_surface_temperature       : 'sst'  # used in masks
+      # surface_latent_heat_flux      : 'mslhf'  # used in heat_flux
+      # surface_sensible_heat_flux    : 'msshf'  # used in heat_flux
+      surface_net_solar_radiation   : 'ssrd'   # used in heat_flux
+      surface_net_thermal_radiation : 'strd'   # used in heat_flux
+      total_precipitation           : 'tp'     # used in net_freshwater
+      # evaporation                   : 'e'      # used in net_freshwater
+      turbulent_east_surface_stress : 'metss'  # momentum flux
+      # turbulent_north_surface_stress: 'mntss' # momentum flux
+      2m_dewpoint_temperature       : 'd2m'    # used in dQdSST/air_density
+    coordinates:
+      lat: 'latitude'
+      lon: 'longitude'
+      time: 'time'

@@ -1,6 +1,7 @@
 import xarray as xr
 import numpy as np
 from tqdm import tqdm
+from fill import extrapolate as ex
 
 ###############################################################################
 
@@ -194,7 +195,6 @@ def _extrapolate_laplace(src, mask, varb):
         variables name, must exist in src
     :returns: xarray.Dataset
     """
-    import utils.extrapolate as ex
 
     # variable to extrapolate
     varz = src[varb].values
@@ -206,8 +206,8 @@ def _extrapolate_laplace(src, mask, varb):
     cor = 1.6
     mxs = 10
 
-    nx = src.dims['longitude']
-    ny = src.dims['latitude']
+    nx = src.dims['lon']
+    ny = src.dims['lat']
     toxi = nx
     toeta = ny
 
@@ -224,12 +224,12 @@ def _extrapolate_laplace(src, mask, varb):
         tmp_field = np.where(np.ma.getmask(tmp_field), undef, tmp_field)
 
 
-        field[t,:,:] = ex.extrapolate.fill(int(1),int(toxi),
-                                           int(1),int(toeta),
-                                           float(tx), float(critx), float(cor), float(mxs),
-                                           np.asarray(tmp_field, order='F'),
-                                           int(nx),
-                                           int(ny))
+        field[t,:,:] = ex.fill(int(1),int(toxi),
+                                int(1),int(toeta),
+                                float(tx), float(critx), float(cor), float(mxs),
+                                np.asarray(tmp_field, order='F'),
+                                int(nx),
+                                int(ny))
 
     dsout = src[[varb]].copy(deep=True)
     dsout[varb] = (("time", "latitude", "longitude"), field)
