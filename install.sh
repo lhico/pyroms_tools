@@ -1,18 +1,14 @@
 micromamba install -c conda-forge python=3.11
 
-micromamba install -c conda-forge dask netCDF4 ipython
-micromamba install -c conda-forge esmpy xarray numpy shapely cf_xarray sparse numba bottleneck
-micromamba install -c conda-forge xesmf
-micromamba install -c conda-forge scikit-fmm pyproj tqdm
-micromamba install -c conda-forge gsw
+micromamba install -c conda-forge dask netCDF4 ipython --yes
+micromamba install -c conda-forge esmpy xarray numpy shapely cf_xarray sparse numba bottleneck cartopy --yes
+micromamba install -c conda-forge xesmf --yes
+micromamba install -c conda-forge scikit-fmm pyproj tqdm gsw scikit-build-core cmake ninja scikit-build lpsolve55 --yes
 
 # pyroms installation
 git clone https://github.com/lhico/pyroms
 
-micromamba install -c conda-forge scikit-build-core cmake ninja
-micromamba install scikit-build
 pip install build
-micromamba install -c conda-forge lpsolve55
 
 cd pyroms/pyroms
 pip install .
@@ -27,3 +23,10 @@ pip install .
 python -m build
 pip install .
 
+cd vertical_interpolation
+pip install .
+cd ..
+
+cd extrapolate
+pip install .
+cd ..
