@@ -210,13 +210,17 @@ def interpolate_and_rotate(source_nc, boundary_target_grid, roms_grid, varbs, dx
                                                                source_nc[varb].values[0], dx)
             var = interpolation(gfpath, nc_roms_grd, source_nc[varb][0], roms_grid, gridtype=gtype)
             boundary_target_grid[varb].values = [var]
+
         elif source_nc[varb].values.ndim == 3:
             source_nc[varb].values = extrapolation_nearest(source_nc.longitude.values,
                                                             source_nc.latitude.values,
                                                             source_nc[varb].values, dx)
-            var = interpolation2d(gfpath, nc_roms_grd, source_nc[varb], roms_grid, gridtype=gtype).squeeze()
-            boundary_target_grid[varb].values = [var]
+            var = interpolation2d(gfpath, nc_roms_grd, source_nc[varb], roms_grid, gridtype=gtype)
+            var =var.squeeze()
+        boundary_target_grid[varb].values = [var]
+
     nc_aux1 = rotate_vector_field(boundary_target_grid)
+
     nc_aux1.ubar.values[:] = ((nc_aux1.u * nc_aux1.s_rho).sum(dim='s_rho') / nc_aux1.s_rho.sum()).values
     nc_aux1.vbar.values[:] = ((nc_aux1.v * nc_aux1.s_rho).sum(dim='s_rho') / nc_aux1.s_rho.sum()).values
     return nc_aux1
@@ -261,7 +265,7 @@ def main():
     outfile = dicts['bndry']['output_file']
     rename_coords = dicts['bndry']['rename_dims']
     rename_vars = dicts['bndry']['rename_vars']
-    rename_vars = dicts['bndry']['rename_vars_rho']
+    rename_vars_rho = dicts['bndry']['rename_vars_rho']
     invert_depth = dicts['bndry']['invert_depth']
     zdel = dicts['bndry']['delete_idepths']
     dx = dicts['bndry']['dxdy']
@@ -292,8 +296,8 @@ def main():
     assert_dict_values(rename_vars, ['zeta', 'temp', 'salt', 'u', 'v'])
     assert_dict_values(rename_coords, ['time', 'depth', 'lat', 'lon'])
 
-    sources_nc_ = sources_nc_.rename_dims(rename_coords).rename_vars(rename_vars)
-    print(sources_nc_)
+    nc_ini_src = nc_ini_src.rename_dims(rename_coords)
+    nc_ini_src = nc_ini_src.rename_vars(rename_vars)
 
     # selecting time period 
     sources_nc0 = slice_time(sources_nc_, tstart, tfinal)
@@ -316,7 +320,6 @@ def main():
             continue
 
         nc_out1 = nc_out0.copy()
-        source_nc = sources_nc0.isel(time=[i])
         source_nc.load()
 
 
@@ -326,7 +329,9 @@ def main():
                 source_nc[var].values[:] = nc[var].values[:, None, None]
             outfile = outfile[:-3] + '_hor_homog.nc'
 
-        zsel = np.delete(np.arange(source_nc.depth.values.size), zdel)
+        # attention
+        zsel = np.arange(nc_ini_src.z.values.size)
+        zsel = np.delete(zsel, zdel)
         source_nc_ = source_nc.isel(depth=zsel)
 
         nc_aux1 = interpolate_and_rotate(source_nc_,
