@@ -197,7 +197,13 @@ def slice_time(nc_ini_src_, tstart, tfinal):
 
 def interpolate_and_rotate(source_nc, boundary_target_grid, roms_grid, varbs, dx, gfpath, nc_roms_grd):
     for varb in varbs:
-        gtype = 'rho' if varb not in ['u', 'v'] else varb
+        gtype = 'rho'
+        if varb in ['u']:
+            gtype = 'u'
+        elif varb in ['v']:
+            gtype = 'v' 
+        
+
         if source_nc[varb].values.ndim == 4:
             source_nc[varb].values[0] = extrapolation_nearest(source_nc.longitude.values,
                                                                source_nc.latitude.values,
@@ -262,18 +268,33 @@ def main():
     horizontal_homog_fields = dicts['bndry']['horizontal_homog_fields']
     tstart, tfinal = dicts['bndry']['time_slice']
     gridpath = dicts['grid']['grid']
-    
+    path_icfile = dicts['bndry']['ic_file']
+    path_bdry_file = dicts['bndry']['bdry_template']
+    bdry_source_file = dicts['bndry']['source_file']
+
     nc_roms_grd = xr.open_dataset(gridpath)
-    boundary_target_grid = xr.open_mfdataset(dicts['bndry']['ic_file'], concat_dim='ocean_time', combine='nested')
-    nc_out0 = xr.open_mfdataset(dicts['bndry']['bdry_template'], concat_dim='ocean_time', combine='nested', decode_times=False)
-    sources_nc_ = xr.open_mfdataset(dicts['bndry']['source_file'], concat_dim='time', combine='nested', decode_times=False)
+    boundary_target_grid = xr.open_mfdataset(path_icfile,
+                                             concat_dim='ocean_time',
+                                             combine='nested')
+
+    nc_out0 = xr.open_mfdataset(path_bdry_file,
+                                concat_dim='ocean_time',
+                                combine='nested',
+                                decode_times=False)
+                                
+    sources_nc_ = xr.open_mfdataset(bdry_source_file,
+                                    concat_dim='time',
+                                    combine='nested',
+                                    decode_times=False)
     
 
     # assert that source file has the correct variables and dimensions
     assert_dict_values(rename_vars, ['zeta', 'temp', 'salt', 'u', 'v'])
     assert_dict_values(rename_coords, ['time', 'depth', 'lat', 'lon'])
+
     sources_nc_ = sources_nc_.rename_dims(rename_coords).rename_vars(rename_vars)
     print(sources_nc_)
+
     # selecting time period 
     sources_nc0 = slice_time(sources_nc_, tstart, tfinal)
 
@@ -308,7 +329,14 @@ def main():
         zsel = np.delete(np.arange(source_nc.depth.values.size), zdel)
         source_nc_ = source_nc.isel(depth=zsel)
 
-        nc_aux1 = interpolate_and_rotate(source_nc_, boundary_target_grid, roms_grid, rename_vars.values(), dx, gridpath, nc_roms_grd)
+        nc_aux1 = interpolate_and_rotate(source_nc_,
+                                         boundary_target_grid,
+                                         roms_grid,
+                                         rename_vars.values(),
+                                         dx,
+                                         gridpath,
+                                         nc_roms_grd)
+                                         
         copy_boundary_values(nc_aux1, nc_out1, rename_vars.values())
 
         nc_out1 = nc_out1.assign_coords(ocean_time=[tref1[i]])
