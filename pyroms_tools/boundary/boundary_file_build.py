@@ -332,7 +332,7 @@ def main():
             outfile = outfile[:-3] + '_hor_homog.nc'
 
         # attention
-        zsel = np.arange(nc_ini_src.z.values.size)
+        zsel = np.arange(sources_nc.z.values.size)
         zsel = np.delete(zsel, zdel)
         source_nc_ = source_nc.isel(depth=zsel)
 
