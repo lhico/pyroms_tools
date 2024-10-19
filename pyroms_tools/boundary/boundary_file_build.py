@@ -202,6 +202,8 @@ def interpolate_and_rotate(source_nc, boundary_target_grid, roms_grid, varbs, dx
             gtype = 'u'
         elif varb in ['v']:
             gtype = 'v' 
+
+        print(f'Interpolating {varb} field')
         
 
         if source_nc[varb].values.ndim == 4:
