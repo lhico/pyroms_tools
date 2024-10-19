@@ -67,8 +67,8 @@ def main():
     startTime = config['default']['bndry']['startTime']  # This should be updated based on your actual config
     output_file = config['default']['bndry']['bdry_template']
     gridfile = config['default']['grid']['grid']
-    nename_vars_rho = config['default']['bndry']['nename_vars_rho']
-    nename_vars = config['default']['bndry']['nename_vars']
+    rename_vars_rho = config['default']['bndry']['rename_vars_rho']
+    rename_vars = config['default']['bndry']['rename_vars']
 
     create_grid_file(config['default'])
     
@@ -79,9 +79,9 @@ def main():
     itstr = str(it).replace(' ', 'T')
     
     interpolate_vector_fields(dst_grd, itstr)
-    interpolate_scalar_fields(dst_grd, itstr, nename_vars_rho)
+    interpolate_scalar_fields(dst_grd, itstr, rename_vars_rho)
     
-    merge_files_and_cleanup(output_file, dst_grd, nename_vars)
+    merge_files_and_cleanup(output_file, dst_grd, rename_vars)
 
 if __name__ == "__main__":
     main()
