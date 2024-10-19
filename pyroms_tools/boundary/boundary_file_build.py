@@ -298,8 +298,8 @@ def main():
     assert_dict_values(rename_vars, ['zeta', 'temp', 'salt', 'u', 'v'])
     assert_dict_values(rename_coords, ['time', 'depth', 'lat', 'lon'])
 
-    nc_ini_src = nc_ini_src.rename_dims(rename_coords)
-    nc_ini_src = nc_ini_src.rename_vars(rename_vars)
+    source_nc_ = source_nc_.rename_dims(rename_coords)
+    source_nc_ = source_nc_.rename_vars(rename_vars)
 
     # selecting time period 
     sources_nc0 = slice_time(sources_nc_, tstart, tfinal)
