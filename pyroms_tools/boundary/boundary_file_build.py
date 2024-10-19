@@ -317,9 +317,9 @@ def main():
             continue
 
         source_nc = sources_nc0.isel(time=[i])
-        if glob.glob(outfile % (str(source_nc.time.values[0])[:19])):
-            print(f'{outfile % (str(source_nc.time.values[0])[:19])} already saved')
-            continue
+        # if glob.glob(outfile % (str(source_nc.time.values[0])[:19])):
+            # print(f'{outfile % (str(source_nc.time.values[0])[:19])} already saved')
+            # continue
 
         nc_out1 = nc_out0.copy()
         source_nc.load()
@@ -332,7 +332,7 @@ def main():
             outfile = outfile[:-3] + '_hor_homog.nc'
 
         # attention
-        zsel = np.arange(sources_nc_.z.values.size)
+        zsel = np.arange(sources_nc_.depth.values.size)
         zsel = np.delete(zsel, zdel)
         source_nc_ = source_nc.isel(depth=zsel)
 
