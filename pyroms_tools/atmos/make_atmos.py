@@ -61,7 +61,7 @@ def mask_sst(ds):
                     The keys are:
                         - 'sea_surface_temperature'
     """
-    mask = nc['sea_surface_temperature']
+    mask = ds['sea_surface_temperature']
     condition = ~np.isnan(mask.isel(time=0))
     return xr.where(condition, 0, 1)
 
@@ -191,8 +191,8 @@ def get_standard_dict():
 def switched_dict_items_keys(dicts):
     return {value: key for key, value in dicts.items()}
 
-# def main():
-if __name__ == '__main__':
+def main():
+	#if __name__ == '__main__':
     """
     Bulk fluxes used in ROMS are momentum, heat and freshwater fluxes.
     
@@ -234,11 +234,12 @@ if __name__ == '__main__':
 
     # Load datasets
     fpath = glob.glob(fpath_single)
+    print(fpath)
     nc = [xr.open_dataset(f, decode_times=False) for f in fpath]
     # nc2 = xr.open_mfdataset(fpath[5:9],combine='by_coords', compat='override', decode_times=False)
     # nc3 = xr.open_mfdataset(fpath[10:],combine='by_coords', compat='override', decode_times=False)
     nc = xr.merge(nc)
-
+    print(nc)
     # standardizing coordinate names to time, lat, lon
     aux = switched_dict_items_keys(era_rename_coords)
     nc = nc.rename(aux)
@@ -296,7 +297,7 @@ if __name__ == '__main__':
     # dsout
     # os.system(f'rm test_*_{tref.year[0]}-{tref.month[0]:02d}.nc')
 
-# # if __name__ == "__main__":
+if __name__ == "__main__":
 
 
-# #     main()
+     main()
