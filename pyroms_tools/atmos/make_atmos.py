@@ -182,7 +182,7 @@ def get_standard_dict():
       '2m_temperature': 't2m',                # used in dQdSST/air_density
       'sea_level_pressure': 'sp',            # used in dQdSST/air_density
       'turbulent_east_surface_stress': 'metss',
-    #   'turbulent_north_surface_stress': 'mntss',
+      'turbulent_north_surface_stress': 'mntss',
     }
     
     return s_dicts
