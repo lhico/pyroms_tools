@@ -190,12 +190,12 @@ def main():
 
     outfile = dicts['ic']['ic_file']
     ic_start = dicts['ic']['starttime']
-    rename_coords = dicts.get('rename_dims', {})
-    rename_vars = dicts.get('rename_vars', {})
+    rename_coords = dicts['ic']['rename_dims']
+    #rename_vars = dicts['ic']['rename_vars']
     map_varbs = dicts['ic']['map_varbs']
     invert_depth = dicts.get('invert', [])
     zdel = dicts.get('delete_idepths', [])
-    horizontal_homog_fields = dicts.get('ic.hor_homog', False)
+    horizontal_homog_fields = dicts['ic']['hor_homog']
 
     nc_roms_grd = xr.open_dataset(dicts['grid']['grid'])
     nc_ini_src = xr.open_mfdataset(dicts['ic']['source_file'], decode_times=False, chunks={'time': 1})
@@ -215,11 +215,16 @@ def main():
     outfile = ic_start.strftime(outfile)
     ds_out = nc_roms_grd
 
-    nc_ini_src = nc_ini_src.rename_dims(rename_coords).rename_vars(rename_vars)
+    nc_ini_src = nc_ini_src.rename_dims(rename_coords)
+    #.rename_vars(rename_vars)
     print(nc_ini_src.time.values)
-
+    
+    print(horizontal_homog_fields)
     if horizontal_homog_fields:
+        print('averaging the fields')
         nc = nc_ini_src.mean(dim=['lon', 'lat'])
+        nc.load()
+        nc_ini_src.load()
         for var in map_varbs:
             print(var)
             if nc_ini_src[var].ndim == 3:
@@ -228,9 +233,9 @@ def main():
                 nc_ini_src[var].values[:] = 0
             elif nc_ini_src[var].ndim == 4:
                 nc_ini_src[var].values[0, :] = nc[var].values[0, :, None, None]
-            nc_ini_src['u'].values[:] = 0
-            nc_ini_src['v'].values[:] = 0
-            nc_ini_src['zeta'].values[:] = 0
+            nc_ini_src['uo'].values[:] = 0
+            nc_ini_src['vo'].values[:] = 0
+            nc_ini_src['zos'].values[:] = 0
 
         outfile = outfile[:-3] + '_hor_homog.nc'
 
