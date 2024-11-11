@@ -63,9 +63,10 @@ def interpolation(fpath: str, nc_roms_grd: xr.Dataset, source_grid: xr.Dataset, 
     interpvarb = np.zeros(z.shape)
     mask = nc_roms_grd[f'mask_{gridtype}'].values
     ind = np.where(mask != 0)
+    # mask_3d = np.broadcast_to(mask != 0, interpolated.values.shape)
 
     interpolated.values = interpolated_smoothed
-    interpolated.vales[~ind] = np.nan
+    # interpolated.values[~mask_3d] = np.nan
 
     for j, i in zip(ind[0], ind[1]):
         logging.info(f'Interpolating: {j}, {i}')
