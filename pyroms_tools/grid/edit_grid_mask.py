@@ -25,11 +25,11 @@ def largest_contiguous_ocean_mask(matrix):
     
     return largest_region
 
+if __name__ == '__main__':
+    # ds = xr.open_dataset('/mnt/34c919f6-6617-49de-a20f-05e4186230b9/Dropbox/trabalho_irado/Northeastern/other/roms_grid01_smooth.nc')
+    ds = xr.open_dataset('roms_grid01_smooth.nc')
+    ds.mask_rho.values = largest_contiguous_ocean_mask(ds.mask_rho.values)
 
-ds = xr.open_dataset('/mnt/34c919f6-6617-49de-a20f-05e4186230b9/Dropbox/trabalho_irado/Northeastern/other/roms_grid01_smooth.nc')
+    em.main(ds.mask_rho.values, ds.lat_rho.values, ds.lon_rho.values)
 
-ds.mask_rho.values = largest_contiguous_ocean_mask(ds.mask_rho.values)
-
-em.main(ds.mask_rho.values, ds.lat_rho.values, ds.lon_rho.values)
-
-ds = ut.update_mask(ds)
+    ds = ut.update_mask(ds)
