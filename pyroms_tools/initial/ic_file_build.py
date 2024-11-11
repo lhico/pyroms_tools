@@ -5,6 +5,7 @@ import numpy as np
 import xarray as xr
 import xesmf as xe
 from scipy import interpolate
+from scipy.ndimage import gaussian_filter
 from pyroms_tools import utils as ut
 import os, sys
 from scipy.spatial import cKDTree
@@ -58,17 +59,21 @@ def interpolation(fpath: str, nc_roms_grd: xr.Dataset, source_grid: xr.Dataset, 
         z = z[:, :-1, :]
 
     interpolated = interpolate_horizontal(source_grid, target_grid)
+    interpolated_smoothed = gaussian_filter(interpolated.values, sigma=1)
     interpvarb = np.zeros(z.shape)
     mask = nc_roms_grd[f'mask_{gridtype}'].values
     ind = np.where(mask != 0)
 
+    interpolated.values = interpolated_smoothed
+    interpolated.vales[~ind] = np.nan
+
     for j, i in zip(ind[0], ind[1]):
         logging.info(f'Interpolating: {j}, {i}')
         f = interpolate.interp1d(-interpolated.depth.values,
-                                 interpolated[:, j, i].values,
-                                 bounds_error=False,
-                                 fill_value='extrapolate',
-                                 kind='slinear')
+                                    interpolated[:, j, i],
+                                    bounds_error=False,
+                                    fill_value='extrapolate',
+                                    kind='slinear')
         interpvarb[:, j, i] = f(z[:, j, i])
     return interpvarb
 
