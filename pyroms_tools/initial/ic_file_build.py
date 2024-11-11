@@ -213,11 +213,6 @@ def main():
             nc_ini_src = nc_ini_src.sel(time=[tref1], method='nearest')
 
     outfile = ic_start.strftime(outfile)
-
-    if glob.glob(outfile):
-        print(f'{outfile} already saved')
-        exit()
-
     ds_out = nc_roms_grd
 
     nc_ini_src = nc_ini_src.rename_dims(rename_coords).rename_vars(rename_vars)
@@ -238,6 +233,11 @@ def main():
             nc_ini_src['zeta'].values[:] = 0
 
         outfile = outfile[:-3] + '_hor_homog.nc'
+
+    if glob.glob(outfile):
+        print(f'{outfile} already saved')
+        exit()
+
 
     zsel = np.arange(nc_ini_src.depth.values.size)
     zsel = np.delete(zsel, zdel)
