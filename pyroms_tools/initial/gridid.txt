@@ -1,0 +1,11 @@
+#
+id      = ceresIV_2.0
+name    = ceresIV_2.0
+grdfile = /home/otel/Desktop/deletar/pyroms_tests/roms_grid01_2.012_smooth.nc
+N       = 40
+grdtype = roms
+Vtrans  = 2
+theta_s = 6
+theta_b = 2
+Tcline  = 100
+#
