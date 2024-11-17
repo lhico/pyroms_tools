@@ -1,0 +1,10 @@
+default:
+  grid: './grid_config_test.yml'
+  ic:
+    starttime: '2019-08-01T12:00:00'
+    ic_template: './tests/roms_ic_empty.nc'
+    scalar_varbs: 
+    map_varbs: {'zos':'zeta', 'thetao': 'temp', 'so': 'salt', 'uo': 'u', 'vo': 'v'}
+    source_file: './tests/expected/glorys12v1_subset.nc'
+    ic_file: './tests/roms_ic.nc'
+    hor_homog: False
