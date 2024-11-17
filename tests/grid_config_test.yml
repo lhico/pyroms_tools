@@ -12,7 +12,7 @@ default:
     theta_b: 2
     Tcline: 100
     grid: ./tests/test_grid.nc
-    grid_name: 'BaciaSantos'
+    gridname: 'default'
   smooth:
     input: ./tests/expected/expected_grid.nc
     output: ./tests/test_grid_smooth.nc
