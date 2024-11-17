@@ -1,10 +1,14 @@
-import pathlib
+import pathlib, os
+import subprocess
+
 import numpy as np
 import matplotlib.pyplot as plt
 import xarray as xr
-import subprocess
+
 import pytest
+
 import pyroms
+from bathy_smoother import bathy_smoothing
 from pyroms_tools.grid.make_grid_ import (load_config_from_yaml, rotate_coords, 
                                           interpolate_bathymetry, hgrid, h_bathymetry)
 
