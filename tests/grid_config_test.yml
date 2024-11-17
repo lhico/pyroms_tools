@@ -1,0 +1,22 @@
+default:
+  output_dir: ../tests
+  bathy_file: ../tests/expected/bathy.nc
+  grid:
+    dxdy: 0.125
+    xoffset: 3.5
+    yoffset: 2
+    WESN: [-49, -44.8, -25.1, -24.1]
+    rot: -0.9
+    N: 40
+    theta_s: 6
+    theta_b: 2
+    Tcline: 100
+    grid: ../tests/test_grid.nc
+    grid_name: 'BaciaSantos'
+  smooth:
+    input: ../tests/test_grid.nc
+    output: ../tests/test_grid_smoothed.nc
+    capdepth: 200
+    smooth: 0.125
+    nested: False
+    inputaux: ''
